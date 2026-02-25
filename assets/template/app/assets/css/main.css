@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "@bitrix24/b24ui-nuxt";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+}

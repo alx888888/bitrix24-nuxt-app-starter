@@ -1,0 +1,5 @@
+version: 1
+interface:
+  display_name: Bitrix24 Nuxt Starter
+  short_description: Scaffold Bitrix24 Nuxt app starter with guardrails
+  default_prompt: Разверни в текущей папке стартовый проект Bitrix24 local server app на Nuxt+B24UI+Vercel+Neon с rules, AGENTS.md и статусной панелью.
