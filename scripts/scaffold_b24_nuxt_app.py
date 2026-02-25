@@ -32,7 +32,7 @@ def parse_args():
     p.add_argument('--app-title', required=True)
     p.add_argument('--placement-preset', required=True, choices=sorted(PLACESETS.keys()))
     p.add_argument('--agent-rules-profile', default='strict-b24')
-    p.add_argument('--agent-rules-targets', default='qoder')
+    p.add_argument('--agent-rules-targets', default='agents,qoder,codex,antigravity')
     p.add_argument('--package-manager', default='npm')
     p.add_argument('--init-git', action='store_true')
     p.add_argument('--overwrite', action='store_true')
@@ -48,6 +48,10 @@ def ensure_target(path: Path, overwrite: bool):
 
 def copy_template(src: Path, dst: Path):
     for item in src.iterdir():
+        # Root `api/` is intentionally not scaffolded: starter uses Nitro `server/api/*`
+        # on both local dev and Vercel to avoid duplicate function packaging conflicts.
+        if item.name == 'api':
+            continue
         target = dst / item.name
         if item.is_dir():
             if target.exists():
@@ -71,21 +75,31 @@ def render_text_files(root: Path, replacements: dict[str, str]):
             path.write_text(rendered, encoding='utf-8')
 
 
+TARGET_RULE_DIRS = {
+    'agents': Path('.agents/rules'),
+    'qoder': Path('.qoder/rules'),
+    'codex': Path('.codex/rules'),
+    'antigravity': Path('.antigravity/rules'),
+}
+
+
 def copy_rules(project_root: Path, profile: str, targets: str):
     created = []
+    src = RULES_ROOT / profile / 'qoder'
+    if not src.exists():
+        print(f'[ERROR] Rules profile not found: {profile}', file=sys.stderr)
+        sys.exit(4)
+
     for target in [t.strip() for t in targets.split(',') if t.strip()]:
-        if target != 'qoder':
-            print(f'[WARN] agent rules target not implemented in v1, skipped: {target}')
+        rule_dir = TARGET_RULE_DIRS.get(target)
+        if not rule_dir:
+            print(f'[WARN] unknown agent rules target skipped: {target}')
             continue
-        src = RULES_ROOT / profile / 'qoder'
-        if not src.exists():
-            print(f'[ERROR] Rules profile not found: {profile}', file=sys.stderr)
-            sys.exit(4)
-        dst = project_root / '.qoder' / 'rules'
+        dst = project_root / rule_dir
         dst.mkdir(parents=True, exist_ok=True)
         for file in sorted(src.glob('*.md')):
             shutil.copy2(file, dst / file.name)
-            created.append(str(Path('.qoder/rules') / file.name))
+            created.append(str(rule_dir / file.name))
     return created
 
 
@@ -99,11 +113,12 @@ def write_agents_md(project_root: Path):
 ## Обязательный порядок чтения перед изменениями
 1. `docs/architecture/invariants.md`
 2. `STARTER_MANIFEST.json`
-3. релевантные файлы в `.qoder/rules/`
+3. релевантные файлы в `.agents/rules/` (и зеркалах `.qoder/.codex/.antigravity`, если они есть)
 4. `docs/architecture/api-contracts.md` (если меняются API/типы)
 
 ## Где лежат правила
-- `.qoder/rules/` — always-on guardrails для AI-агентов.
+- `.agents/rules/` — канонические always-on guardrails для AI-агентов.
+- Совместимые зеркала (если сгенерированы): `.qoder/rules/`, `.codex/rules/`, `.antigravity/rules/`.
 
 ## Source of truth файлы
 - `docs/architecture/invariants.md`
@@ -114,7 +129,7 @@ def write_agents_md(project_root: Path):
 
 ## Нельзя менять без синхронизации документации
 - Контракты `/api/system/status` и `/api/app-settings`
-- Поведение `api/b24/install` и `api/b24/handler`
+- Поведение endpoint'ов `/api/b24/install` и `/api/b24/handler` (реализация в `server/api/b24/*`)
 - Preset placement'ов
 - Архитектурные инварианты shared/server-core
 
@@ -127,7 +142,7 @@ def write_agents_md(project_root: Path):
 
 def write_manifest(project_root: Path, args, rules_created):
     data = {
-        'starterVersion': '1.0.0',
+        'starterVersion': '1.0.1',
         'generatedAt': datetime.now(UTC).isoformat().replace('+00:00', 'Z'),
         'projectName': args.project_name,
         'appTitle': args.app_title,
@@ -145,12 +160,53 @@ def write_manifest(project_root: Path, args, rules_created):
             'docs/architecture/api-contracts.md',
             'docs/architecture/placement-presets.md',
             'docs/checklists/smoke.md',
+            'smoke.md',
         ],
+        'agentRules': {
+            'canonicalDir': '.agents/rules',
+            'requestedTargets': [t.strip() for t in args.agent_rules_targets.split(',') if t.strip()],
+        },
     }
     (project_root / 'STARTER_MANIFEST.json').write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8',
     )
+
+
+def validate_scaffold_output(project_root: Path):
+    required_files = [
+        'AGENTS.md',
+        'STARTER_MANIFEST.json',
+        'README.md',
+        'smoke.md',
+        'docs/architecture/invariants.md',
+        'docs/architecture/api-contracts.md',
+        'docs/architecture/placement-presets.md',
+        'docs/checklists/smoke.md',
+        'server/api/b24/install.ts',
+        'server/api/b24/handler.ts',
+        'shared/server-core/db.js',
+    ]
+    missing = [p for p in required_files if not (project_root / p).exists()]
+    if missing:
+        raise RuntimeError(f'Missing required generated files: {", ".join(missing)}')
+
+    rules_dir = project_root / '.agents' / 'rules'
+    if not rules_dir.exists() or not list(rules_dir.glob('*.md')):
+        raise RuntimeError('Canonical rules were not generated in .agents/rules')
+
+    duplicate_root_api = sorted((project_root / 'api' / 'b24').glob('*.js')) if (project_root / 'api' / 'b24').exists() else []
+    if duplicate_root_api:
+        names = ', '.join(str(p.relative_to(project_root)) for p in duplicate_root_api)
+        raise RuntimeError(f'Duplicate root Vercel b24 functions detected (must not exist): {names}')
+
+    install_ts = (project_root / 'server/api/b24/install.ts').read_text(encoding='utf-8')
+    if 'shouldRedirectToUi' not in install_ts:
+        raise RuntimeError('server/api/b24/install.ts is missing iframe/document redirect guard')
+
+    db_js = (project_root / 'shared/server-core/db.js').read_text(encoding='utf-8')
+    if 'STORAGE_URL' not in db_js:
+        raise RuntimeError('shared/server-core/db.js is missing STORAGE_URL fallback')
 
 
 def init_git_if_requested(project_root: Path):
@@ -178,6 +234,7 @@ def main():
     rules_created = copy_rules(target, args.agent_rules_profile, args.agent_rules_targets)
     write_agents_md(target)
     write_manifest(target, args, rules_created)
+    validate_scaffold_output(target)
 
     if args.init_git:
         init_git_if_requested(target)
@@ -185,12 +242,15 @@ def main():
     print('[OK] Starter created')
     print(f'  target: {target}')
     print(f'  placement-preset: {args.placement_preset}')
-    print(f'  rules: {len(rules_created)} file(s)')
-    print('Next steps:')
-    print('  1. npm install')
-    print('  2. npm run dev')
-    print('  3. Настроить Vercel + Neon env: DATABASE_URL, APP_SECRETS_KEY')
-    print('  4. В Bitrix24 указать /api/b24/handler и /api/b24/install')
+    print(f'  rules: {len(rules_created)} file copies')
+    print(f"  canonical rules dir: {target / '.agents' / 'rules'}")
+    print('Next steps (short):')
+    print('  1. npm install && npm run dev')
+    print('  2. Vercel: deploy project')
+    print('  3. Vercel Storage: Create Neon DB -> Connect Project -> prefix POSTGRES (or set DATABASE_URL manually)')
+    print('  4. Vercel Env: APP_SECRETS_KEY, APP_BASE_URL=https://<domain> -> Redeploy')
+    print('  5. Check https://<domain>/api/system/status (database.ok=true)')
+    print('  6. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
 
 
 if __name__ == '__main__':

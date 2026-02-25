@@ -33,6 +33,12 @@ function isUninstallEvent(eventName: unknown) {
   return String(eventName || '').toUpperCase() === 'ONAPPUNINSTALL'
 }
 
+function shouldRedirectToUi(event: any) {
+  const accept = String(getRequestHeader(event, 'accept') || '')
+  const fetchDest = String(getRequestHeader(event, 'sec-fetch-dest') || '')
+  return accept.includes('text/html') || fetchDest === 'iframe' || fetchDest === 'document'
+}
+
 async function callBitrixMethod({ domain, authId, method, params = {} }: any) {
   const endpoint = `https://${domain}/rest/${method}.json`
   const body = new URLSearchParams()
@@ -96,6 +102,7 @@ export default defineEventHandler(async (event) => {
   const host = getRequestHeader(event, 'x-forwarded-host') || getRequestHeader(event, 'host') || url.host || 'localhost:3000'
   const proto = getRequestHeader(event, 'x-forwarded-proto') || url.protocol.replace(':', '') || 'http'
   const appHandlerUrl = `${proto}://${host}/api/b24/handler`
+  const redirectToUi = shouldRedirectToUi(event)
 
   if (method === 'GET') {
     return sendRedirect(event, appHandlerUrl, 307)
@@ -119,6 +126,9 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!authId || !domain) {
+    if (redirectToUi) {
+      return sendRedirect(event, appHandlerUrl, 303)
+    }
     setResponseStatus(event, 400)
     return { ok: false, error: 'BAD_REQUEST', reason: 'Missing required install auth payload' }
   }
@@ -181,6 +191,9 @@ export default defineEventHandler(async (event) => {
   }
 
   if (errors.length > 0) {
+    if (redirectToUi) {
+      return sendRedirect(event, appHandlerUrl, 303)
+    }
     setResponseStatus(event, 502)
     return {
       ok: false,
@@ -189,6 +202,10 @@ export default defineEventHandler(async (event) => {
       details: errors,
       placements
     }
+  }
+
+  if (redirectToUi) {
+    return sendRedirect(event, appHandlerUrl, 303)
   }
 
   return {

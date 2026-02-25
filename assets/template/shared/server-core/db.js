@@ -5,8 +5,12 @@ let ensured = false
 let ensurePromise = null
 
 function getDatabaseUrl() {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || ''
-  if (!url) throw new Error('DATABASE_URL is not configured')
+  const url =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.STORAGE_URL ||
+    ''
+  if (!url) throw new Error('DATABASE_URL is not configured (accepted: DATABASE_URL | POSTGRES_URL | STORAGE_URL)')
   return url
 }
 

@@ -18,6 +18,6 @@
 
 Если меняется список placement'ов или логика preset, обновить:
 
-- `api/b24/install.js`
+- `server/api/b24/install.ts`
 - `docs/architecture/placement-presets.md`
 - `STARTER_MANIFEST.json`

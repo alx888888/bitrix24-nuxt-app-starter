@@ -3,6 +3,7 @@
 ## Purpose
 
 Generate always-on rules in the target project to constrain AI agents and reduce architectural/UI drift.
+Use `.agents/rules/` as canonical location and optionally mirror the same files into agent-specific folders (for example `.qoder/rules`, `.codex/rules`, `.antigravity/rules`) for compatibility.
 
 ## Rule Set
 
