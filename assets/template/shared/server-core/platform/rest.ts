@@ -1,5 +1,23 @@
 import { isB24Payload, type B24Payload } from './context'
 
+function appendFormValue(body: URLSearchParams, key: string, value: unknown) {
+  if (value === undefined || value === null) return
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => appendFormValue(body, `${key}[${index}]`, item))
+    return
+  }
+
+  if (isB24Payload(value)) {
+    for (const [childKey, childValue] of Object.entries(value)) {
+      appendFormValue(body, `${key}[${childKey}]`, childValue)
+    }
+    return
+  }
+
+  body.append(key, String(value))
+}
+
 export async function callBitrixMethod({
   domain,
   authId,
@@ -20,7 +38,7 @@ export async function callBitrixMethod({
   body.append('auth', authId)
 
   for (const [key, value] of Object.entries(params)) {
-    body.append(key, String(value))
+    appendFormValue(body, key, value)
   }
 
   const response = await fetch(endpoint, {

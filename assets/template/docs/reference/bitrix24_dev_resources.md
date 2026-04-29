@@ -137,6 +137,28 @@ Bitrix24 Development Resources
 - ограничения и особенности доставки
 - как отписаться/переустановить подписку
 
+### 2.3.1 Если задача про business process activity
+
+Маршрут:
+
+1. `api-reference -> bizproc -> bizproc.activity.add/update`
+2. `api-reference -> bizproc -> bizproc.event.send`
+3. scopes/permissions: `bizproc` плюс доменные scopes, которые activity вызывает
+4. local app install flow и capability registration hook в `shared/server-core/platform/capabilities.ts`
+
+Что искать внутри:
+
+- shape activity fields и return properties
+- `USE_SUBSCRIPTION` и ожидание callback
+- формат `event_token`
+- controlled return values и error contract
+
+Ресурсы:
+
+- [bizproc.activity.add](https://apidocs.bitrix24.ru/api-reference/bizproc/bizproc-activity/bizproc-activity-add.html)
+- [bizproc.activity.update](https://apidocs.bitrix24.ru/api-reference/bizproc/bizproc-activity/bizproc-activity-update.html)
+- [bizproc.event.send](https://apidocs.bitrix24.ru/api-reference/bizproc/bizproc-robot/bizproc-event-send.html)
+
 ### 2.4 Если задача про UI в стиле Bitrix24
 
 Маршрут:

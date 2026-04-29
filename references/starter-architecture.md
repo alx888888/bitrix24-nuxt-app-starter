@@ -36,18 +36,22 @@ The portal profile updates on install and on app open. Portal identity source of
 - Default scaffold: no bot, no bizproc, no IM flow, no CRM capability code.
 - Capability growth goes through docs + extension points first, then modules.
 - Generated projects include `npm run capability:create -- <capability-name>` for skeleton-only bounded module creation.
+- Generated projects include `npm run capability:create -- <capability-name> --kind bizproc-activity` for a generic Bitrix24 activity skeleton with shared payload parsing and no domain logic.
 
 ## Runtime and DB policy
 
 - Generated projects target Node.js `>=22.12.0 <25` and npm.
 - `npm run db:migrate` is the explicit Neon schema setup path.
 - Runtime schema ensure remains an idempotent first-run safety net, not the preferred production migration path.
+- Runtime safety net and `db:migrate` use one shared schema module.
 - Placement presets come from `references/placement-presets.json`.
+- Direct `h3` imports require a direct `h3@^1.15` dependency; avoid `h3@2` release candidates in this starter.
 
 ## Enforcement policy
 
 - `.agents/rules` is the only generated rules directory.
 - Generated validator checks exact rules-pack, UI drift, import boundaries, stale docs and secret markers.
+- Verification includes dead-code and production-dependency audit scripts.
 - `B24App` lives at the root app shell.
 
 ## Canonical references

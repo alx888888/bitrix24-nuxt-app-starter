@@ -1,3 +1,10 @@
+import {
+  isBitrixRecord,
+  pickPayloadField,
+  readBitrixAuthPayload,
+  type BitrixRuntimePayload
+} from './bitrix-payload'
+
 export interface B24Context {
   portalDomain: string
   memberId: string
@@ -5,7 +12,7 @@ export interface B24Context {
   authId: string
 }
 
-export type B24Payload = Record<string, unknown>
+export type B24Payload = BitrixRuntimePayload
 
 export function normalizeB24Domain(rawDomain: unknown): string {
   if (!rawDomain || typeof rawDomain !== 'string') return ''
@@ -13,7 +20,7 @@ export function normalizeB24Domain(rawDomain: unknown): string {
 }
 
 export function isB24Payload(value: unknown): value is B24Payload {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+  return isBitrixRecord(value)
 }
 
 export function getErrorMessage(error: unknown, fallback: string): string {
@@ -38,25 +45,7 @@ function pickQueryValue(query: Record<string, unknown>, ...keys: string[]) {
 }
 
 export function pickFlexibleField(payload: B24Payload, key: string) {
-  if (payload[key] !== undefined) return payload[key]
-  if (payload[key.toLowerCase()] !== undefined) return payload[key.toLowerCase()]
-  if (payload[key.toUpperCase()] !== undefined) return payload[key.toUpperCase()]
-
-  for (const candidate of [
-    `auth[${key}]`,
-    `auth[${key.toLowerCase()}]`,
-    `AUTH[${key}]`,
-    `AUTH[${key.toLowerCase()}]`
-  ]) {
-    if (payload[candidate] !== undefined) return payload[candidate]
-  }
-
-  if (isB24Payload(payload.auth)) {
-    if (payload.auth[key] !== undefined) return payload.auth[key]
-    if (payload.auth[key.toLowerCase()] !== undefined) return payload.auth[key.toLowerCase()]
-  }
-
-  return undefined
+  return pickPayloadField(payload, key, ['auth'])
 }
 
 export function getB24ContextFromHeadersAndQuery(
@@ -121,7 +110,10 @@ function redactSensitiveValue(value: unknown): unknown {
 
 export function sanitizeInstallPayload(payload: B24Payload) {
   const clone: B24Payload = {}
-  for (const [key, value] of Object.entries(payload)) {
+  const authPayload = readBitrixAuthPayload(payload)
+  const mergedPayload = Object.keys(authPayload).length > 0 ? { ...payload, auth: authPayload } : payload
+
+  for (const [key, value] of Object.entries(mergedPayload)) {
     clone[key] = shouldRedactKey(key) ? '[redacted]' : redactSensitiveValue(value)
   }
 

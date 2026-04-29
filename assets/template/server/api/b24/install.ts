@@ -24,6 +24,10 @@ import {
   PLATFORM_PLACEMENT_PRESET
 } from '~~/shared/server-core/platform/config'
 import { createApiErrorPayload } from '~~/shared/server-core/platform/api-error'
+import {
+  runPlatformCapabilityRegistrations,
+  type PlatformCapabilityRegistrationResult
+} from '~~/shared/server-core/platform/capabilities'
 import { placementBind, placementUnbind } from '~~/shared/server-core/platform/rest'
 
 interface ProfileSyncResult {
@@ -48,6 +52,11 @@ interface PlacementBindFailure {
   stage: 'bind'
   unbind: unknown
   bind: unknown
+}
+
+interface CapabilitySyncResult {
+  ok: boolean
+  registrations: PlatformCapabilityRegistrationResult[]
 }
 
 export default defineEventHandler(async (event) => {
@@ -131,6 +140,25 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, appHandlerUrl, 303)
   }
 
+  let capabilitySync: CapabilitySyncResult = {
+    ok: true,
+    registrations: []
+  }
+
+  if (isInstallEvent(eventName) && profileSync.ok) {
+    const registrations = await runPlatformCapabilityRegistrations({
+      context,
+      eventName: String(eventName).toUpperCase(),
+      appBaseUrl: `${proto}://${host}/`,
+      appHandlerUrl,
+      profile: profileSync.profile || null
+    })
+    capabilitySync = {
+      ok: registrations.every((registration) => registration.ok),
+      registrations
+    }
+  }
+
   const placements: PlacementResult[] = []
   const errors: PlacementBindFailure[] = []
 
@@ -193,6 +221,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  if (!capabilitySync.ok) {
+    if (redirectToUi) {
+      return sendRedirect(event, appHandlerUrl, 303)
+    }
+    setResponseStatus(event, 502)
+    return {
+      ...createApiErrorPayload({
+        error: 'CAPABILITY_SYNC_FAILED',
+        reason: 'One or more platform capability registrations failed',
+        details: capabilitySync.registrations
+      }),
+      capabilitySync,
+      placements,
+      profileSync
+    }
+  }
+
   if (redirectToUi) {
     return sendRedirect(
       event,
@@ -209,6 +254,7 @@ export default defineEventHandler(async (event) => {
     event: String(eventName).toUpperCase(),
     placementPreset: PLATFORM_PLACEMENT_PRESET,
     placements,
+    capabilitySync,
     profileSync
   }
 })

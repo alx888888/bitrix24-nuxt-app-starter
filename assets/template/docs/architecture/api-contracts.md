@@ -77,12 +77,38 @@ Shape:
 - fallback `ONAPPINSTALL`, если `event` пустой, но пришли `AUTH_ID` и `DOMAIN`
 - profile upsert / soft uninstall
 - preset-managed placement bind/unbind
+- capability registration hook после успешного install profile sync
 
 Поведение:
 
 - `GET` -> `307` redirect на `/api/b24/handler`
 - `POST` в iframe/document -> `303` redirect на `/`
 - `POST` без нужного auth context -> `400 BAD_REQUEST`
+
+JSON response дополняется `capabilitySync`:
+
+```json
+{
+  "capabilitySync": {
+    "ok": true,
+    "registrations": []
+  }
+}
+```
+
+Если domain capability registration возвращает ошибку, JSON request получает `502 CAPABILITY_SYNC_FAILED`. Browser/iframe request редиректит пользователя обратно в handler flow.
+
+## Bitrix runtime payload helpers
+
+Core helper: `shared/server-core/platform/bitrix-payload.ts`.
+
+Назначение:
+
+- читать nested payload: `auth`, `document_id`, `properties`
+- читать Bitrix form payload: `auth[domain]`, `document_id[2]`, `properties[FIELD]`
+- нормализовать строки через `toText`
+
+Эти helpers применяются в platform code и generated `bizproc-activity` skeleton.
 
 ## `GET|POST /api/b24/handler`
 

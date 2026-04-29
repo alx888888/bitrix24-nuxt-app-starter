@@ -10,5 +10,6 @@ Bitrix24 install/placement:
 - Default placement preset: `none`; placement bind без явного preset не добавлять.
 - Привязка placement должна быть идемпотентной: `placement.unbind` -> `placement.bind`.
 - Preset-managed placements нельзя менять точечно без обновления `docs/architecture/placement-presets.md`.
+- Install-time domain capabilities подключать через `shared/server-core/platform/capabilities.ts`, без разрастания `/api/b24/install`.
 - Для REST health-check использовать нейтральный `app.info`.
 - Для диагностики placements использовать `placement.get` (через REST/MCP Bitrix).

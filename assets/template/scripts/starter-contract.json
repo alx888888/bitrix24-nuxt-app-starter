@@ -2,6 +2,8 @@
   "requiredFiles": [
     "AGENTS.md",
     "README.md",
+    "package.json",
+    "knip.json",
     ".nvmrc",
     ".node-version",
     "app.config.ts",
@@ -28,8 +30,12 @@
     "shared/app-contract/api-error.ts",
     "shared/app-contract/platform-status.ts",
     "shared/server-core/platform/api-error.ts",
+    "shared/server-core/platform/bitrix-payload.ts",
+    "shared/server-core/platform/capabilities.ts",
     "shared/server-core/platform/context.ts",
     "shared/server-core/platform/db.ts",
+    "shared/server-core/platform/schema.mjs",
+    "shared/server-core/platform/schema.mjs.d.ts",
     "shared/server-core/platform/profile.ts",
     "shared/server-core/platform/rest.ts",
     "shared/server-core/platform/install.ts",
@@ -47,8 +53,12 @@
     "docs/reference/official-stack-map.md",
     "scripts/create-capability.mjs",
     "scripts/db-migrate.mjs",
+    "scripts/verify-production-smoke.mjs",
     "scripts/starter-contract.json",
     "scripts/validate-starter-contract.mjs",
+    "tests/unit/bitrix-payload.test.ts",
+    "tests/unit/bitrix-rest.test.ts",
+    "tests/unit/platform-capabilities.test.ts",
     "tests/unit/platform-status.test.ts",
     "tests/unit/install-flow.test.ts",
     "tests/unit/install-route.test.ts",
@@ -93,7 +103,9 @@
       "/status",
       "docs/architecture/project-requirements.md",
       "docs/architecture/module-map.md",
-      "docs/architecture/extension-points.md"
+      "docs/architecture/extension-points.md",
+      "--kind bizproc-activity",
+      "raw request/result payload"
     ],
     "README.md": [
       "/api/platform/status",
@@ -111,8 +123,13 @@
       "\"verify\"",
       "\"db:migrate\"",
       "\"capability:create\"",
+      "\"audit:dead-code\"",
+      "\"audit:security\"",
+      "\"smoke:production\"",
       "\"engines\"",
       "\"packageManager\"",
+      "\"h3\"",
+      "\"knip\"",
       "@bitrix24/b24ui-nuxt"
     ],
     ".env.example": [
@@ -141,13 +158,19 @@
       "shared/app-contract/*",
       "b24ui",
       "Node.js",
+      "h3@^1.15",
       "npm run db:migrate",
       "npm run capability:create",
+      "npm run audit:dead-code",
+      "npm run smoke:production",
       "теста или acceptance-case"
     ],
     "docs/architecture/module-map.md": [
       "/api/platform/status",
       "shared/server-core/platform/*",
+      "shared/server-core/platform/bitrix-payload.ts",
+      "shared/server-core/platform/capabilities.ts",
+      "shared/server-core/platform/schema.mjs",
       "shared/app-contract/*",
       "shared/app-contract/api-error.ts",
       "shared/server-core/platform/api-error.ts"
@@ -158,7 +181,8 @@
       "module-map.md",
       "capability-map.md",
       "api-contracts.md",
-      "smoke.md"
+      "smoke.md",
+      "--kind bizproc-activity"
     ],
     "docs/architecture/capability-map.md": [
       "placements",
@@ -176,7 +200,11 @@
     ],
     "docs/checklists/smoke.md": [
       "/api/platform/status",
-      "/status"
+      "/status",
+      "npm run audit:dead-code",
+      "npm run audit:security",
+      "npm run smoke:production",
+      "X-Frame-Options: DENY"
     ],
     "docs/reference/official-stack-map.md": [
       "starter-b24ui",

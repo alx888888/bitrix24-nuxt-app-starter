@@ -157,6 +157,35 @@ function validateImportBoundaries(rootDir, problems, contract) {
   }
 }
 
+function validatePackageContract(rootDir, problems) {
+  const packagePath = join(rootDir, 'package.json')
+  if (!existsSync(packagePath)) return
+  const pkg = JSON.parse(readFileSync(packagePath, 'utf8'))
+  const scripts = pkg.scripts || {}
+  const dependencies = pkg.dependencies || {}
+  const devDependencies = pkg.devDependencies || {}
+
+  for (const scriptName of ['audit:dead-code', 'audit:security', 'smoke:production', 'verify']) {
+    if (!scripts[scriptName]) problems.push(`Missing package script: ${scriptName}`)
+  }
+
+  if (dependencies.h3 !== '^1.15.11') {
+    problems.push(`h3 dependency must stay pinned to ^1.15.11, got ${dependencies.h3 || '<missing>'}`)
+  }
+
+  if (!devDependencies.knip) {
+    problems.push('Missing devDependency: knip')
+  }
+
+  if (!String(scripts.verify || '').includes('npm run audit:dead-code')) {
+    problems.push('verify script must include npm run audit:dead-code')
+  }
+
+  if (!String(scripts.verify || '').includes('npm run audit:security')) {
+    problems.push('verify script must include npm run audit:security')
+  }
+}
+
 function collectProblems(rootDir) {
   const contract = JSON.parse(
     readFileSync(join(rootDir, 'scripts/starter-contract.json'), 'utf8')
@@ -263,6 +292,7 @@ function collectProblems(rootDir) {
 
   validateVueUiSource(rootDir, problems, contract)
   validateImportBoundaries(rootDir, problems, contract)
+  validatePackageContract(rootDir, problems)
 
   return problems
 }

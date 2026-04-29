@@ -10,3 +10,5 @@ API и типы:
 - Ошибки должны быть контролируемыми: использовать поля `error`, `reason`, при необходимости `details`.
 - Для JSON ошибок использовать единый `ApiErrorPayload`: `ok: false`, `error`, `reason`, опционально `details`.
 - UI не должен парсить сырые ответы Bitrix REST напрямую; использовать серверную нормализацию.
+- Для Bitrix nested/form payload использовать `shared/server-core/platform/bitrix-payload.ts`.
+- Runtime logs не должны сохранять raw request/result payload, tokens, secrets, application_token, access_token, refresh_token и raw exception objects.

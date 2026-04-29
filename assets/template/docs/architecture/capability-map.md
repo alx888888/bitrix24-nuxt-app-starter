@@ -24,7 +24,10 @@
 
 ### bizproc activity
 
-- новый модуль `shared/server-core/bizproc/*`
+- generated skeleton: `npm run capability:create -- <capability-name> --kind bizproc-activity`
+- новый модуль `shared/server-core/<capability>/*`
+- registration hook: `shared/server-core/platform/capabilities.ts`
+- shared parser: `shared/server-core/platform/bitrix-payload.ts`
 - contract docs для activity payload
 - smoke с BP install/runtime checks
 

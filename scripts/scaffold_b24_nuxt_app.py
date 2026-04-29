@@ -130,8 +130,9 @@ def main():
     print('  5. Vercel Storage: Create Neon DB -> Connect Project -> prefix POSTGRES (or set DATABASE_URL manually)')
     print('  6. Run npm run db:migrate with the target DB env')
     print('  7. Vercel: redeploy after storage env injection')
-    print('  8. Check https://<domain>/status and https://<domain>/api/platform/status')
-    print('  9. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
+    print('  8. Run npm run smoke:production -- --base-url https://<domain>')
+    print('  9. Check https://<domain>/status and https://<domain>/api/platform/status')
+    print('  10. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
 
 
 if __name__ == '__main__':

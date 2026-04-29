@@ -13,11 +13,12 @@
 1. `/api/b24/install` и `/api/b24/handler` раздельны.
 2. `/api/b24/install` поддерживает fallback `ONAPPINSTALL`.
 3. `/api/b24/handler` редиректит в `/` и переносит только safe B24 context.
-4. B24 frame init идет через один bootstrap path:
+4. Install-time capability sync идет через `shared/server-core/platform/capabilities.ts`.
+5. B24 frame init идет через один bootstrap path:
    - `app/features/platform-frame/*`
    - `app/stores/b24-context.ts`
    - `app/composables/use-platform-bootstrap.ts`
-5. Прямой вызов SDK из случайных компонентов не допускается.
+6. Прямой вызов SDK из случайных компонентов не допускается.
 
 ## Status policy
 
@@ -28,7 +29,7 @@
 
 ## UI policy
 
-1. Visual primitives — только official `b24ui` и `b24icons`.
+1. Visual primitives — только official `b24ui`; иконки — только official `b24icons`.
 2. `B24App` создается один раз в `app/app.vue`.
 3. Raw HTML допускается только для route shell, layout glue и slot wrapper.
 4. `style=` и визуальные `<style scoped>` в feature screens не допускаются.
@@ -38,5 +39,7 @@
 
 1. Новый функционал начинается с теста или acceptance-case.
 2. Change set без `npm run verify` не закрывается, кроме явного блокера.
-3. `docs/architecture/project-requirements.md` фиксирует human-readable архитектурный контракт и anti-pattern policy.
-4. API contract, module map, extension points, placement presets и smoke checklist синхронизируются в том же изменении.
+3. Dead-code drift проверяется через `npm run audit:dead-code`.
+4. Production deploy проверяется через `npm run smoke:production -- --base-url https://<domain>`.
+5. `docs/architecture/project-requirements.md` фиксирует human-readable архитектурный контракт и anti-pattern policy.
+6. API contract, module map, extension points, placement presets и smoke checklist синхронизируются в том же изменении.

@@ -5,14 +5,17 @@
 3. Add business/API keys only through Vercel Project Environment Variables.
 4. Run `npm run db:migrate` with the target DB env.
 5. Run `npm run verify`.
-6. Open `/`, `/status`, and `/api/platform/status`.
-7. Confirm `/status` shows the raw JSON payload from `/api/platform/status`.
-8. In Bitrix24 Local Server App settings:
+6. Run `npm run smoke:production -- --base-url https://<domain>`.
+7. Open `/`, `/status`, and `/api/platform/status`.
+8. Confirm `/status` shows the raw JSON payload from `/api/platform/status`.
+9. Confirm `/api/b24/install?DOMAIN=smoke.bitrix24.ru&PROTOCOL=1&LANG=ru&APP_SID=smoke` returns HTTP 307 to `/api/b24/handler`.
+10. Confirm `/` and `/api/b24/install` do not send `X-Frame-Options: DENY`.
+11. In Bitrix24 Local Server App settings:
    - handler path: `https://<domain>/api/b24/handler`
    - install path: `https://<domain>/api/b24/install`
-9. Install app and open it.
-10. Confirm portal profile row exists in Neon.
-11. Confirm `health.database`, `health.bitrixRest`, and `health.bitrixRest.installationComplete = true` in `/api/platform/status`.
+12. Install app and open it.
+13. Confirm portal profile row exists in Neon.
+14. Confirm `health.database`, `health.bitrixRest`, and `health.bitrixRest.installationComplete = true` in `/api/platform/status`.
 
 ## If you changed the skill itself
 

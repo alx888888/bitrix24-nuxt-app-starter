@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "app.config.ts",
+    "types/b24-nuxt.d.ts"
+  ],
+  "ignoreDependencies": [
+    "vitest-environment-nuxt",
+    "vue-tsc"
+  ],
+  "rules": {
+    "exports": "off",
+    "types": "off"
+  }
+}

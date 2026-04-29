@@ -38,7 +38,7 @@
 
 ## Инварианты разработки
 
-- Для visual primitives использовать только официальные компоненты `b24ui` и официальные иконки `b24icons`.
+- Для visual primitives использовать только официальные компоненты `b24ui`; при добавлении иконок использовать официальный `b24icons`.
 - `B24App` держать в `app/app.vue`; feature screens не создают второй provider.
 - `app/assets/css/main.css` держать минимальным: official imports и технический reset.
 - Инициализацию B24 frame держать в одном bootstrap path: `app/features/platform-frame/*` -> `app/stores/b24-context.ts` -> `app/composables/use-platform-bootstrap.ts`.
@@ -46,8 +46,10 @@
 - `/api/platform/status` и страница `/status` идут в одном change set с docs sync.
 - Новый функционал начинать с теста или acceptance-case, затем писать реализацию.
 - Новый bounded module начинать через `npm run capability:create -- <capability-name>` или эквивалентный skeleton с теми же границами.
+- Bitrix24 activity skeleton создавать через `npm run capability:create -- <capability-name> --kind bizproc-activity`.
 - Schema setup для production выполнять через `npm run db:migrate`; runtime schema ensure использовать только как safety net.
 - Change set без обновленного теста и `npm run verify` не закрывать. Если проверка недоступна, это фиксировать в отчете.
+- Runtime logs не пишут raw request/result payload, tokens, secrets и raw exception objects.
 
 ## Обязательная синхронизация docs
 

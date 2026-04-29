@@ -19,6 +19,7 @@ Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neo
 - `.agents/rules/*` и шаблонный `AGENTS.md`
 - source-of-truth docs для architecture, contracts, extension points и smoke
 - test harness на `vitest` + `@nuxt/test-utils`
+- `npm run audit:dead-code`, `npm run audit:security`, `npm run smoke:production`
 
 ## Требования к проекту и целевая архитектура
 
@@ -34,7 +35,7 @@ Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neo
 - `server/api/*` — только thin adapters
 - platform logic живет в `shared/server-core/platform/*`
 - shared DTO и contract types живут в `shared/app-contract/*`
-- UI собирается только через official `b24ui` и `b24icons`
+- UI собирается только через official `b24ui`; для иконок использовать official `b24icons`
 - B24 frame init идет только через `app/features/platform-frame/* -> app/stores/b24-context.ts -> app/composables/use-platform-bootstrap.ts`
 - новый функционал стартует с теста или acceptance-case
 - docs sync идет в том же change set, где меняются API, module boundaries, extension points, placement presets или verification contour
@@ -46,6 +47,7 @@ Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neo
 - `docs/architecture/*` закрепляют инварианты, contracts и growth path.
 - `scripts/validate-starter-contract.mjs` проверяет file set, exact rules-pack, docs markers, stale markers, UI drift и import boundaries.
 - стартовые tests и `docs/checklists/smoke.md` закрывают verification contour.
+- `knip` ловит dead-code drift, а `npm audit --omit=dev` проверяет production dependency surface.
 
 ## Модульные слои
 
@@ -54,6 +56,8 @@ Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neo
 - `app/stores/*` — B24 context state.
 - `server/api/*` — thin Nitro adapters.
 - `shared/server-core/platform/*` — install/handler flow, Neon profile lifecycle, status aggregation и Bitrix REST wrappers.
+- `shared/server-core/platform/bitrix-payload.ts` — generic Bitrix payload helpers для nested/form payload.
+- `shared/server-core/platform/capabilities.ts` — install-time hook для bounded platform capabilities.
 - `shared/app-contract/*` — shared DTO, API error payload и contract types.
 - `docs/architecture/*` — source of truth.
 - `docs/reference/*` — official routing map и B24UI reference.
@@ -73,6 +77,12 @@ Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neo
 npm install
 npm run verify
 npm run dev
+```
+
+Deployed smoke:
+
+```bash
+npm run smoke:production -- --base-url https://<domain>
 ```
 
 ## Переменные окружения
@@ -113,13 +123,14 @@ Scope:
 
 ## Правила разработки
 
-- Visual primitives только через official `b24ui` и `b24icons`.
+- Visual primitives только через official `b24ui`; иконки только через official `b24icons`.
 - `B24App` держится в `app/app.vue`.
 - `main.css` держит только imports и технический reset.
 - Inline `style=`, raw UI primitives и визуальные `<style scoped>` не использовать.
 - Новый функционал: сначала тест или acceptance-case, затем реализация.
 - Любой сдвиг API, module map, extension points, placement preset и smoke contour идет вместе с docs sync.
 - Новый bounded module можно создать командой `npm run capability:create -- <capability-name>`, затем обязательно обновить architecture docs и tests под реальную capability.
+- Bitrix24 activity skeleton: `npm run capability:create -- <capability-name> --kind bizproc-activity`.
 
 ## Где искать source of truth
 

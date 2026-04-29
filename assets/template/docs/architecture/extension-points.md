@@ -27,7 +27,15 @@
 npm run capability:create -- <capability-name>
 ```
 
+Bizproc activity skeleton:
+
+```bash
+npm run capability:create -- <capability-name> --kind bizproc-activity
+```
+
 Скрипт создает минимальный contract/core/route/test/readme набор и отказывается перезаписывать существующие файлы без `--force`.
+
+Для `bizproc-activity` skeleton дополнительно использует shared Bitrix payload parser, nested REST params и platform capability registration hook. До регистрации activity импортируйте generated `register<Capability>PlatformCapability` в `shared/server-core/platform/capabilities.ts` и добавьте domain handler logic.
 
 ## Что сюда обычно попадает
 

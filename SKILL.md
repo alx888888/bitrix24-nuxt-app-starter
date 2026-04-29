@@ -47,6 +47,9 @@ Runtime contract: Node.js `>=22.12.0 <25`, npm only, generated `.nvmrc`/`.node-v
 - Generated tests:
   - status contract
   - install/handler flow helpers
+  - Bitrix nested/form payload helpers
+  - nested Bitrix REST param encoding
+  - platform capability registration hook
   - B24 frame bootstrap helpers
   - status screen render
   - scaffold contract validation
@@ -58,7 +61,11 @@ Runtime contract: Node.js `>=22.12.0 <25`, npm only, generated `.nvmrc`/`.node-v
 - Tooling:
   - `npm run db:migrate` for explicit Neon schema setup
   - `npm run capability:create -- <capability-name>` for skeleton-only bounded module creation
-  - `npm run verify` for test/lint/typecheck/build/contract validation
+  - `npm run capability:create -- <capability-name> --kind bizproc-activity` for generic Bitrix24 activity skeleton creation
+  - `npm run audit:dead-code` for dead-code drift checks
+  - `npm run audit:security` for production dependency audit
+  - `npm run smoke:production -- --base-url https://<domain>` for deployed iframe/install smoke
+  - `npm run verify` for test/lint/typecheck/build/contract/dead-code/security validation
 
 ## Script usage
 
@@ -89,6 +96,7 @@ Important:
 - Root `api/*` functions are not scaffolded.
 - Prefer a dedicated Neon database per app project.
 - Placement presets are defined in `references/placement-presets.json`.
+- Keep direct `h3@^1.15` in generated projects while server routes import from `h3`.
 - `scripts/validate_starter_contract.py --root <generated-project>` provides a standalone contract check.
 
 ## References Map

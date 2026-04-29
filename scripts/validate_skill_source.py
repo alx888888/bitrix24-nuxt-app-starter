@@ -40,6 +40,10 @@ SKILL_REQUIRED_MARKERS = {
         'Node.js',
         'npm run db:migrate',
         'npm run capability:create',
+        'npm run audit:dead-code',
+        'npm run audit:security',
+        'npm run smoke:production',
+        '--kind bizproc-activity',
         'npm run verify',
         'scripts/validate_skill_source.py',
         'scripts/validate_starter_contract.py',
@@ -48,6 +52,9 @@ SKILL_REQUIRED_MARKERS = {
     'references/starter-architecture.md': [
         '/api/platform/status',
         '/status',
+        'h3@^1.15',
+        'dead-code',
+        '--kind bizproc-activity',
         'assets/template/docs/reference/*',
         'references/raw/b24ui-llms-full.txt',
         'docs/architecture/project-requirements.md'
@@ -55,6 +62,8 @@ SKILL_REQUIRED_MARKERS = {
     'references/post-deploy-checklist.md': [
         'validate_skill_source.py',
         'validate_starter_contract.py',
+        'npm run smoke:production',
+        'X-Frame-Options: DENY',
         'npm run verify'
     ],
     'references/agent-rules-spec.md': [
@@ -82,7 +91,8 @@ RULE_REQUIRED_MARKERS = {
     '30-bitrix-install-placement.md': [
         'handler',
         'install',
-        'placement.bind'
+        'placement.bind',
+        'platform/capabilities.ts'
     ],
     '40-data-neon-profile-lifecycle.md': [
         'Developer/API keys',
@@ -93,10 +103,15 @@ RULE_REQUIRED_MARKERS = {
     '50-api-and-types-discipline.md': [
         'ApiErrorPayload',
         '/api/platform/status',
-        'сырые ответы Bitrix REST'
+        'сырые ответы Bitrix REST',
+        'bitrix-payload.ts',
+        'raw request/result payload'
     ],
     '60-testing-and-verification.md': [
         'npm run verify',
+        'npm run audit:dead-code',
+        'npm run audit:security',
+        'npm run smoke:production',
         '/api/platform/status',
         'iframe/redirect'
     ]
