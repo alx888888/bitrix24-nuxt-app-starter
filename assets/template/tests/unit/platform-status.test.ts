@@ -25,4 +25,44 @@ describe('buildPlatformStatusPayload', () => {
     expect(payload.health.database.ok).toBe(false)
     expect(payload.health.bitrixRest.method).toBe('app.info')
   })
+
+  it('marks payload as degraded when app.info reports unfinished installation', async () => {
+    const payload = await buildPlatformStatusPayload(
+      {
+        portalDomain: 'demo.bitrix24.ru',
+        memberId: 'member-1',
+        userId: '7',
+        authId: 'auth-1'
+      },
+      {
+        now: () => '2026-04-24T03:25:31.843Z',
+        checkDbHealth: vi.fn().mockResolvedValue(undefined),
+        resolvePortalProfileByContext: vi.fn().mockResolvedValue({
+          portal_domain: 'demo.bitrix24.ru',
+          app_status: 'installed',
+          install_auth_id: 'auth-1',
+          installed_at: '2026-04-24T03:24:55.730Z',
+          uninstalled_at: null,
+          last_app_opened_at: '2026-04-24T03:25:31.315Z',
+          updated_at: '2026-04-24T03:25:31.315Z'
+        }),
+        callAppInfo: vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          data: {
+            result: {
+              ID: 182,
+              STATUS: 'L',
+              INSTALLED: false
+            }
+          }
+        })
+      }
+    )
+
+    expect(payload.ok).toBe(false)
+    expect(payload.health.bitrixRest.ok).toBe(false)
+    expect(payload.health.bitrixRest.installationComplete).toBe(false)
+    expect(payload.health.bitrixRest.reason).toContain('installFinish')
+  })
 })

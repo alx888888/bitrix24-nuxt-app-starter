@@ -1,5 +1,8 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const TEXT_FILE_EXTENSIONS = new Set(['.css', '.env', '.example', '.js', '.json', '.md', '.mjs', '.ts', '.vue'])
 
 function walkVueFiles(rootDir, relativeDir) {
   const directory = join(rootDir, relativeDir)
@@ -17,6 +20,28 @@ function walkVueFiles(rootDir, relativeDir) {
     }
   }
   return files
+}
+
+function readDirectoryMarkdownNames(directory) {
+  if (!existsSync(directory)) return []
+  return readdirSync(directory)
+    .filter((entry) => entry.endsWith('.md'))
+    .sort()
+}
+
+function validateRequiredRules(rootDir, problems, contract) {
+  const canonicalDir = join(rootDir, contract.canonicalRulesDir)
+  const requiredFiles = [...(contract.requiredRuleFiles || [])].sort()
+  const actualFiles = readDirectoryMarkdownNames(canonicalDir)
+
+  if (!existsSync(canonicalDir)) {
+    problems.push(`Canonical rules directory missing: ${contract.canonicalRulesDir}`)
+    return
+  }
+
+  if (JSON.stringify(actualFiles) !== JSON.stringify(requiredFiles)) {
+    problems.push(`Canonical rules file set mismatch in ${contract.canonicalRulesDir}: expected ${requiredFiles.join(', ')}, got ${actualFiles.join(', ')}`)
+  }
 }
 
 function compareRuleDirs(rootDir, problems, contract) {
@@ -48,6 +73,99 @@ function compareRuleDirs(rootDir, problems, contract) {
   }
 }
 
+function globToRegExp(pattern) {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '::DOUBLE_STAR::')
+    .replace(/\*/g, '[^/]*')
+    .replace(/::DOUBLE_STAR::/g, '.*')
+  return new RegExp(`^${escaped}$`)
+}
+
+function matchesAnyPattern(relativePath, patterns) {
+  return patterns.some((pattern) => globToRegExp(pattern).test(relativePath))
+}
+
+function importSpecifiers(text) {
+  const specs = []
+  const importFromPattern = /(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g
+  const dynamicImportPattern = /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+
+  for (const match of text.matchAll(importFromPattern)) specs.push(match[1])
+  for (const match of text.matchAll(dynamicImportPattern)) specs.push(match[1])
+
+  return specs
+}
+
+function walkTextFiles(rootDir, relativeDir = '') {
+  const directory = join(rootDir, relativeDir)
+  if (!existsSync(directory)) return []
+
+  const files = []
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.nuxt' || entry.name === '.output') continue
+    const absolutePath = join(directory, entry.name)
+    const nextRelative = relative(rootDir, absolutePath)
+    if (entry.isDirectory()) {
+      files.push(...walkTextFiles(rootDir, nextRelative))
+      continue
+    }
+    if (!entry.isFile()) continue
+    if (TEXT_FILE_EXTENSIONS.has(entry.name.includes('.') ? entry.name.slice(entry.name.lastIndexOf('.')) : '')) {
+      files.push(absolutePath)
+    }
+  }
+  return files
+}
+
+function validateVueUiSource(rootDir, problems, contract) {
+  const allowedStyleBlockFiles = new Set(contract.allowedStyleBlockFiles || [])
+  const forbiddenVueAttributes = contract.forbiddenVueAttributes || []
+  const forbiddenRawUiTags = contract.forbiddenRawUiTags || []
+
+  for (const absolutePath of contract.uiRoots.flatMap((relativePath) => walkVueFiles(rootDir, relativePath))) {
+    const relativePath = relative(rootDir, absolutePath)
+    const text = readFileSync(absolutePath, 'utf8')
+
+    for (const attribute of forbiddenVueAttributes) {
+      if (text.includes(attribute)) {
+        problems.push(`Forbidden Vue attribute "${attribute}" found in ${relativePath}`)
+      }
+    }
+
+    if (/<style\b/i.test(text) && !allowedStyleBlockFiles.has(relativePath)) {
+      problems.push(`Forbidden Vue style block found in ${relativePath}`)
+    }
+
+    for (const tag of forbiddenRawUiTags) {
+      const pattern = new RegExp(`<\\s*${tag}(\\s|>|/)`, 'i')
+      if (pattern.test(text)) {
+        problems.push(`Forbidden raw UI tag <${tag}> found in ${relativePath}; use B24UI component`)
+      }
+    }
+  }
+}
+
+function validateImportBoundaries(rootDir, problems, contract) {
+  const boundaries = contract.forbiddenImportBoundaries || []
+  if (!boundaries.length) return
+
+  for (const absolutePath of walkTextFiles(rootDir)) {
+    const relativePath = relative(rootDir, absolutePath)
+    const text = readFileSync(absolutePath, 'utf8')
+    const specs = importSpecifiers(text)
+
+    for (const boundary of boundaries) {
+      if (!matchesAnyPattern(relativePath, boundary.from || [])) continue
+      for (const spec of specs) {
+        if ((boundary.to || []).some((target) => spec.includes(target))) {
+          problems.push(`Forbidden import boundary in ${relativePath}: "${spec}" (${boundary.message || 'boundary violation'})`)
+        }
+      }
+    }
+  }
+}
+
 function collectProblems(rootDir) {
   const contract = JSON.parse(
     readFileSync(join(rootDir, 'scripts/starter-contract.json'), 'utf8')
@@ -66,6 +184,17 @@ function collectProblems(rootDir) {
     }
   }
 
+  for (const pattern of contract.forbiddenFileGlobs || []) {
+    const matcher = globToRegExp(pattern)
+    for (const absolutePath of walkTextFiles(rootDir)) {
+      const relativePath = relative(rootDir, absolutePath)
+      if (matcher.test(relativePath)) {
+        problems.push(`Forbidden project file present: ${relativePath}`)
+      }
+    }
+  }
+
+  validateRequiredRules(rootDir, problems, contract)
   compareRuleDirs(rootDir, problems, contract)
 
   for (const [relativePath, requiredMarkers] of Object.entries(contract.requiredMarkersByFile)) {
@@ -108,6 +237,17 @@ function collectProblems(rootDir) {
     }
   }
 
+  for (const absolutePath of walkTextFiles(rootDir)) {
+    const relativePath = relative(rootDir, absolutePath)
+    if (relativePath === 'scripts/starter-contract.json') continue
+    const text = readFileSync(absolutePath, 'utf8')
+    for (const marker of contract.forbiddenProjectMarkers || []) {
+      if (text.includes(marker)) {
+        problems.push(`Forbidden project marker found in ${relativePath}: ${marker}`)
+      }
+    }
+  }
+
   const allowedLayoutTokens = new Set(contract.allowedLayoutTokens)
 
   for (const absolutePath of contract.uiRoots.flatMap((relativePath) => walkVueFiles(rootDir, relativePath))) {
@@ -131,6 +271,9 @@ function collectProblems(rootDir) {
     }
   }
 
+  validateVueUiSource(rootDir, problems, contract)
+  validateImportBoundaries(rootDir, problems, contract)
+
   return problems
 }
 
@@ -143,7 +286,15 @@ export function validateStarterContract(rootDir = process.cwd()) {
   return { ok: true, rootDir }
 }
 
-if (import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+function toRealPath(path) {
+  try {
+    return realpathSync(path)
+  } catch {
+    return resolve(path)
+  }
+}
+
+if (toRealPath(fileURLToPath(import.meta.url)) === toRealPath(process.argv[1] || '')) {
   try {
     const rootDir = process.argv[2] || process.cwd()
     validateStarterContract(rootDir)

@@ -29,11 +29,14 @@
 ## UI policy
 
 1. Visual primitives — только official `b24ui` и `b24icons`.
-2. Raw HTML допускается только для route shell, layout glue и slot wrapper.
-3. `app/assets/css/main.css` держит только official imports и технический reset.
+2. `B24App` создается один раз в `app/app.vue`.
+3. Raw HTML допускается только для route shell, layout glue и slot wrapper.
+4. `style=` и визуальные `<style scoped>` в feature screens не допускаются.
+5. `app/assets/css/main.css` держит только official imports и технический reset.
 
 ## Docs and tests
 
 1. Новый функционал начинается с теста или acceptance-case.
-2. Change set без `npm test`, `npm run typecheck`, `npm run build` не закрывается, кроме явного блокера.
-3. API contract, module map, extension points, placement presets и smoke checklist синхронизируются в том же изменении.
+2. Change set без `npm run verify` не закрывается, кроме явного блокера.
+3. `docs/architecture/project-requirements.md` фиксирует human-readable архитектурный контракт и anti-pattern policy.
+4. API contract, module map, extension points, placement presets и smoke checklist синхронизируются в том же изменении.

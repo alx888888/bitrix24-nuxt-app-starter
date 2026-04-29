@@ -20,6 +20,13 @@ const defaultDependencies: PlatformStatusDependencies = {
   callAppInfo
 }
 
+function readInstallationFlag(result: unknown): boolean | null {
+  if (!result || typeof result !== 'object' || !('INSTALLED' in result)) return null
+
+  const value = Reflect.get(result, 'INSTALLED')
+  return typeof value === 'boolean' ? value : null
+}
+
 function createBaseStatusPayload(context: B24Context, now: string): PlatformStatusPayload {
   return {
     ok: false,
@@ -115,10 +122,27 @@ export async function buildPlatformStatusPayload(
       })
 
       if (appInfo.ok) {
-        payload.health.bitrixRest = {
-          ok: true,
-          method: 'app.info',
-          appInfo: appInfo.data.result || {}
+        const appInfoResult =
+          appInfo.data.result && typeof appInfo.data.result === 'object' ? appInfo.data.result : {}
+        const installationComplete = readInstallationFlag(appInfoResult)
+
+        if (installationComplete === false) {
+          payload.health.bitrixRest = {
+            ok: false,
+            restOk: true,
+            method: 'app.info',
+            installationComplete,
+            reason: 'Application installation is not finished; call installFinish in the Bitrix24 frame',
+            appInfo: appInfoResult
+          }
+        } else {
+          payload.health.bitrixRest = {
+            ok: true,
+            restOk: true,
+            method: 'app.info',
+            installationComplete,
+            appInfo: appInfoResult
+          }
         }
       } else {
         const errorDescription =
@@ -126,6 +150,7 @@ export async function buildPlatformStatusPayload(
         const errorCode = typeof appInfo.data.error === 'string' ? appInfo.data.error : null
         payload.health.bitrixRest = {
           ok: false,
+          restOk: false,
           method: 'app.info',
           reason: errorDescription || errorCode || `HTTP ${appInfo.status}`
         }
@@ -133,12 +158,16 @@ export async function buildPlatformStatusPayload(
     } catch (error: unknown) {
       payload.health.bitrixRest = {
         ok: false,
+        restOk: false,
         method: 'app.info',
         reason: getErrorMessage(error, 'Bitrix REST health check failed')
       }
     }
   }
 
-  payload.ok = Boolean(payload.health.backend.ok && payload.health.database.ok)
+  const hasRestContext = Boolean(restDomain && restAuthId)
+  payload.ok = Boolean(
+    payload.health.backend.ok && payload.health.database.ok && (!hasRestContext || payload.health.bitrixRest.ok)
+  )
   return payload
 }

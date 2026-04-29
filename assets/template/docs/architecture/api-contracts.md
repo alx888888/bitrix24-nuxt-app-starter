@@ -5,7 +5,7 @@
 Назначение:
 
 - aggregated platform payload для `/status`
-- backend health, db health, profile snapshot и `app.info`
+- backend health, db health, profile snapshot и `app.info` с флагом завершения установки
 
 Ответ:
 
@@ -36,7 +36,7 @@
   "health": {
     "backend": { "ok": true },
     "database": { "ok": true },
-    "bitrixRest": { "ok": true, "method": "app.info" }
+    "bitrixRest": { "ok": true, "method": "app.info", "installationComplete": true }
   }
 }
 ```
@@ -45,7 +45,29 @@
 
 - `/status` выводит raw JSON этого payload.
 - Home page `/` этот payload не читает.
+- Если `app.info` возвращает `INSTALLED: false`, `health.bitrixRest.ok = false`, `installationComplete = false` и общий `ok` тоже деградирует.
 - Legacy status endpoints в active code не входят.
+
+## API error payload
+
+Shared type: `ApiErrorPayload` в `shared/app-contract/api-error.ts`.
+
+Shape:
+
+```json
+{
+  "ok": false,
+  "error": "ERROR_CODE",
+  "reason": "Human-readable safe reason",
+  "details": {}
+}
+```
+
+Правила:
+
+- `details` опционален.
+- Секреты, токены и raw install payload в error payload не возвращаются.
+- Server routes используют helper `shared/server-core/platform/api-error.ts`.
 
 ## `POST /api/b24/install`
 

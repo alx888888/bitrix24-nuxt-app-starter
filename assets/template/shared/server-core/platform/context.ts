@@ -103,10 +103,26 @@ export function hasB24Context(context: B24Context) {
   return Boolean(context.portalDomain || context.memberId || context.authId)
 }
 
+function shouldRedactKey(key: string) {
+  return /(auth_id|refresh_id|application_token|access_token|refresh_token|client_secret|token|secret|password|key)/i.test(key)
+}
+
+function redactSensitiveValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveValue(item))
+  }
+
+  if (isB24Payload(value)) {
+    return sanitizeInstallPayload(value)
+  }
+
+  return value
+}
+
 export function sanitizeInstallPayload(payload: B24Payload) {
-  const clone = { ...payload }
-  for (const key of ['AUTH_ID', 'auth_id', 'REFRESH_ID', 'refresh_id']) {
-    if (key in clone) clone[key] = '[redacted]'
+  const clone: B24Payload = {}
+  for (const [key, value] of Object.entries(payload)) {
+    clone[key] = shouldRedactKey(key) ? '[redacted]' : redactSensitiveValue(value)
   }
 
   return clone

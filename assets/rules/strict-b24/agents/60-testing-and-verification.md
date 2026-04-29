@@ -7,5 +7,5 @@ trigger: always_on
 - После изменений проверять `/api/platform/status`, `/status` и основные статусы системы.
 - Проверять install/handler flow (`GET`/`POST` сценарии) при изменениях Bitrix-интеграции.
 - Проверять открытие в iframe/redirect context при изменениях B24 bootstrap.
-- Не считать задачу завершенной без `npm test`, `npm run typecheck`, `npm run build` и прохождения `docs/checklists/smoke.md` (или явного указания, что не удалось проверить).
+- Не считать задачу завершенной без `npm run verify` и прохождения `docs/checklists/smoke.md` (или явного указания, что не удалось проверить).
 - Если env не заданы, приложение должно показывать понятные статусы деградации, а не падать 500 без объяснения.

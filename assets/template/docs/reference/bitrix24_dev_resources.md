@@ -720,7 +720,7 @@ Bitrix24 Development Resources
 Ресурсы:
 
 - [B24UI docs: AI / LLM entry](https://bitrix24.github.io/b24ui/docs/getting-started/ai/llms-txt/)
-- Локальный файл проекта: `docs/reference/b24ui-llms-full.txt`
+- Локальный файл проекта: `docs/reference/b24ui-starter-guide.md`
 
 ## 10. Вторичные, но полезные источники (использовать после official docs)
 

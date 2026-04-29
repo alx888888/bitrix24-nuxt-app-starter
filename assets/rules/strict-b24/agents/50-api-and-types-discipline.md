@@ -8,4 +8,5 @@ API и типы:
 - Не возвращать `/api/system/status` и `/api/app-settings`.
 - Не менять shape `/api/platform/status` без явного обновления контрактов, README и `/status`.
 - Ошибки должны быть контролируемыми: использовать поля `error`, `reason`, при необходимости `details`.
+- Для JSON ошибок использовать единый `ApiErrorPayload`: `ok: false`, `error`, `reason`, опционально `details`.
 - UI не должен парсить сырые ответы Bitrix REST напрямую; использовать серверную нормализацию.

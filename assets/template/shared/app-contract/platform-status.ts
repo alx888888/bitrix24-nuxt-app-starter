@@ -2,6 +2,8 @@ export interface PlatformHealthEntry {
   ok: boolean
   reason?: string
   method?: string
+  installationComplete?: boolean | null
+  restOk?: boolean
   [key: string]: unknown
 }
 

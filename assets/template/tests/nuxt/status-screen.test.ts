@@ -44,7 +44,9 @@ describe('PlatformStatusScreen', () => {
     })
 
     expect(wrapper.text()).toContain('Статус')
-    expect(wrapper.text()).toContain('/api/platform/status')
-    expect(wrapper.text()).toContain('"portalDomain": "demo.bitrix24.ru"')
+    const textarea = wrapper.find('textarea')
+    expect(textarea.exists()).toBe(true)
+    expect((textarea.element as HTMLTextAreaElement).readOnly).toBe(true)
+    expect((textarea.element as HTMLTextAreaElement).value).toContain('"portalDomain": "demo.bitrix24.ru"')
   })
 })

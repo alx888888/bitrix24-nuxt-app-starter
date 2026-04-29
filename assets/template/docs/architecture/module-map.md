@@ -2,6 +2,7 @@
 
 - `app/pages/index.vue` — home route shell.
 - `app/pages/status.vue` — status route shell.
+- `app/app.vue` — root `B24App` provider и Nuxt page outlet.
 - `app/features/home/*` — home UI.
 - `app/features/status/*` — status UI и status fetch orchestration.
 - `app/features/platform-frame/*` — B24 frame bootstrap helpers.
@@ -14,8 +15,10 @@
 - `shared/server-core/platform/db.ts` — Neon connection и schema ensure.
 - `shared/server-core/platform/profile.ts` — portal profile lifecycle.
 - `shared/server-core/platform/rest.ts` — Bitrix REST wrappers.
+- `shared/server-core/platform/api-error.ts` — server helper для единого API error payload.
 - `shared/server-core/platform/install.ts` — install/handler pure helpers.
 - `shared/server-core/platform/status.ts` — aggregated status builder.
+- `shared/app-contract/api-error.ts` — shared API error payload type.
 - `shared/app-contract/platform-status.ts` — shared status payload type.
 
 ## Boundary notes
@@ -25,3 +28,5 @@
 - UI не импортирует `shared/server-core/platform/*`.
 - `server/api/*` не содержит business logic.
 - Shared contract layer не импортирует `server-core`.
+- API errors возвращают единый shape `ok: false`, `error`, `reason`, опционально `details`.
+- Общие требования к чистоте слоев и anti-pattern policy описывает `project-requirements.md`.

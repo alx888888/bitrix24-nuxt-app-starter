@@ -8,39 +8,80 @@ from pathlib import Path
 
 CANONICAL_REFERENCE_FILES = [
     'assets/template/docs/reference/bitrix24_dev_resources.md',
-    'assets/template/docs/reference/b24ui-llms-full.txt',
+    'assets/template/docs/reference/b24ui-starter-guide.md',
     'assets/template/docs/reference/official-stack-map.md',
+    'references/b24ui-llms-full.txt',
 ]
 
 FORBIDDEN_SKILL_FILES = [
     'references/bitrix24_dev_resources.md',
-    'references/b24ui-llms-full.txt',
 ]
 
 SKILL_REQUIRED_MARKERS = {
     'SKILL.md': [
+        'docs/architecture/project-requirements.md',
         'assets/template/docs/reference/bitrix24_dev_resources.md',
-        'assets/template/docs/reference/b24ui-llms-full.txt',
+        'assets/template/docs/reference/b24ui-starter-guide.md',
+        'references/b24ui-llms-full.txt',
+        'exact `.agents/rules` file set',
+        'import-boundary checks',
+        'npm run verify',
         'scripts/validate_skill_source.py',
-        'scripts/validate_starter_contract.py'
+        'scripts/validate_starter_contract.py',
+        'scripts/verify_fresh_scaffold.py'
     ],
     'references/starter-architecture.md': [
         '/api/platform/status',
         '/status',
-        'assets/template/docs/reference/*'
+        'assets/template/docs/reference/*',
+        'docs/architecture/project-requirements.md'
     ],
     'references/post-deploy-checklist.md': [
         'validate_skill_source.py',
         'validate_starter_contract.py',
-        'npm test',
-        'npm run typecheck',
-        'npm run build',
-        'npm run lint'
+        'npm run verify'
     ],
     'references/agent-rules-spec.md': [
         '.agents/rules/',
+        'docs/architecture/project-requirements.md',
         'docs/architecture/module-map.md',
         'docs/reference/official-stack-map.md'
+    ]
+}
+
+RULE_REQUIRED_MARKERS = {
+    '00-language-and-format.md': [
+        'Не придумывай'
+    ],
+    '10-ui-b24ui-only.md': [
+        'B24App',
+        'Raw `<button>`',
+        'Inline `style=`'
+    ],
+    '20-architecture-invariants.md': [
+        'server/api/*',
+        'app/**` не импортирует',
+        'shared/app-contract/**'
+    ],
+    '30-bitrix-install-placement.md': [
+        'handler',
+        'install',
+        'placement.bind'
+    ],
+    '40-data-neon-profile-lifecycle.md': [
+        'Developer/API keys',
+        'Bitrix24 runtime-токены',
+        'ADD COLUMN IF NOT EXISTS'
+    ],
+    '50-api-and-types-discipline.md': [
+        'ApiErrorPayload',
+        '/api/platform/status',
+        'сырые ответы Bitrix REST'
+    ],
+    '60-testing-and-verification.md': [
+        'npm run verify',
+        '/api/platform/status',
+        'iframe/redirect'
     ]
 }
 
@@ -86,6 +127,24 @@ def validate_skill_root(root: Path) -> None:
         for marker in stale_markers:
             if marker in text:
                 problems.append(f'Stale marker found in {relative}: {marker}')
+
+    rules_dir = root / 'assets' / 'rules' / 'strict-b24' / 'agents'
+    actual_rule_files = sorted(path.name for path in rules_dir.glob('*.md')) if rules_dir.exists() else []
+    expected_rule_files = sorted(RULE_REQUIRED_MARKERS)
+    if actual_rule_files != expected_rule_files:
+        problems.append(
+            f'Rules pack mismatch: expected {", ".join(expected_rule_files)}, got {", ".join(actual_rule_files)}'
+        )
+
+    for filename, markers in RULE_REQUIRED_MARKERS.items():
+        path = rules_dir / filename
+        if not path.exists():
+            problems.append(f'Missing rule file: {filename}')
+            continue
+        text = path.read_text(encoding='utf-8')
+        for marker in markers:
+            if marker not in text:
+                problems.append(f'Required marker missing in rule {filename}: {marker}')
 
     if problems:
         raise RuntimeError('\n'.join(sorted(set(problems))))

@@ -29,9 +29,6 @@ TEXT_EXTS = {'.md', '.json', '.js', '.ts', '.vue', '.css', '.env', '.example', '
 
 TARGET_RULE_DIRS = {
     'agents': Path('.agents/rules'),
-    'qoder': Path('.qoder/rules'),
-    'codex': Path('.codex/rules'),
-    'antigravity': Path('.antigravity/rules'),
 }
 
 
@@ -42,7 +39,7 @@ def parse_args():
     parser.add_argument('--app-title', required=True)
     parser.add_argument('--placement-preset', default='none', choices=sorted(PLACESETS.keys()))
     parser.add_argument('--agent-rules-profile', default='strict-b24')
-    parser.add_argument('--agent-rules-targets', default='agents,qoder,codex,antigravity')
+    parser.add_argument('--agent-rules-targets', default='agents')
     parser.add_argument('--init-git', action='store_true')
     parser.add_argument('--overwrite', action='store_true')
     return parser.parse_args()
@@ -88,7 +85,7 @@ def render_text_files(root: Path, replacements: dict[str, str]):
 
 def copy_rules(project_root: Path, profile: str, targets: str):
     created: list[str] = []
-    src = RULES_ROOT / profile / 'qoder'
+    src = RULES_ROOT / profile / 'agents'
     if not src.exists():
         print(f'[ERROR] Rules profile not found: {profile}', file=sys.stderr)
         sys.exit(4)
@@ -142,11 +139,11 @@ def main():
     print(f"  canonical rules dir: {target / '.agents' / 'rules'}")
     print('Next steps (short):')
     print('  1. npm install')
-    print('  2. npm test && npm run typecheck && npm run build')
+    print('  2. npm run verify')
     print('  3. npm run dev')
     print('  4. Vercel: deploy project')
     print('  5. Vercel Storage: Create Neon DB -> Connect Project -> prefix POSTGRES (or set DATABASE_URL manually)')
-    print('  6. Vercel Env: APP_SECRETS_KEY, APP_BASE_URL=https://<domain> -> Redeploy')
+    print('  6. Vercel: redeploy after storage env injection')
     print('  7. Check https://<domain>/status and https://<domain>/api/platform/status')
     print('  8. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
 

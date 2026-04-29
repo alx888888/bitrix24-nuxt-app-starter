@@ -13,9 +13,6 @@ export default defineNuxtConfig({
       ]
     }
   },
-  routeRules: {
-    '/api/**': { cors: true }
-  },
   eslint: {
     checker: false
   }

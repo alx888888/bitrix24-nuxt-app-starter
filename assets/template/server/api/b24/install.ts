@@ -23,6 +23,7 @@ import {
   PLATFORM_PLACEMENTS,
   PLATFORM_PLACEMENT_PRESET
 } from '~~/shared/server-core/platform/config'
+import { createApiErrorPayload } from '~~/shared/server-core/platform/api-error'
 import { placementBind, placementUnbind } from '~~/shared/server-core/platform/rest'
 
 interface ProfileSyncResult {
@@ -63,7 +64,10 @@ export default defineEventHandler(async (event) => {
 
   if (method !== 'POST') {
     setResponseStatus(event, 405)
-    return { ok: false, error: 'METHOD_NOT_ALLOWED', reason: 'Use GET or POST' }
+    return createApiErrorPayload({
+      error: 'METHOD_NOT_ALLOWED',
+      reason: 'Use GET or POST'
+    })
   }
 
   const body = await readBody(event).catch(() => ({}))
@@ -82,7 +86,10 @@ export default defineEventHandler(async (event) => {
       return sendRedirect(event, appHandlerUrl, 303)
     }
     setResponseStatus(event, 400)
-    return { ok: false, error: 'BAD_REQUEST', reason: 'Missing required install auth payload' }
+    return createApiErrorPayload({
+      error: 'BAD_REQUEST',
+      reason: 'Missing required install auth payload'
+    })
   }
 
   const profileData = pickInstallProfileData(payload)
@@ -176,9 +183,11 @@ export default defineEventHandler(async (event) => {
     }
     setResponseStatus(event, 502)
     return {
-      ok: false,
-      error: 'PLACEMENT_BIND_FAILED',
-      reason: 'One or more placements failed to bind',
+      ...createApiErrorPayload({
+        error: 'PLACEMENT_BIND_FAILED',
+        reason: 'One or more placements failed to bind',
+        details: errors
+      }),
       details: errors,
       placements
     }

@@ -11,7 +11,7 @@ Provide a reusable `platform-only` starter for Bitrix24 local server application
 - `app/stores/*`: B24 context state
 - `server/api/*`: Nitro adapters
 - `shared/server-core/platform/*`: shared platform logic
-- `shared/app-contract/*`: shared DTO/types
+- `shared/app-contract/*`: shared DTO/types and API error contracts
 
 ## Required Contracts
 
@@ -36,7 +36,15 @@ The portal profile updates on install and on app open. Portal identity source of
 - Default scaffold: no bot, no bizproc, no IM flow, no CRM capability code.
 - Capability growth goes through docs + extension points first, then modules.
 
+## Enforcement policy
+
+- `.agents/rules` is the only generated rules directory.
+- Generated validator checks exact rules-pack, UI drift, import boundaries, stale docs and secret markers.
+- `B24App` lives at the root app shell.
+
 ## Canonical references
 
-- Long-form reference docs live in `assets/template/docs/reference/*`.
+- Generated project reference docs live in `assets/template/docs/reference/*`.
+- Large B24UI reference docs live in `references/b24ui-llms-full.txt` and are not copied into generated projects.
 - `SKILL.md` should route readers to those canonical files instead of parallel copies in `references/*`.
+- Human-readable проектные требования и anti-pattern policy живут в `docs/architecture/project-requirements.md`.

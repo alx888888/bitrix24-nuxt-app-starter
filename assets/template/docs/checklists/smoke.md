@@ -3,8 +3,11 @@
 ## Commands
 
 - [ ] `npm test`
+- [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm run build`
+- [ ] `npm run validate:starter`
+- [ ] `npm run verify`
 
 ## Runtime
 
@@ -26,4 +29,6 @@
 - [ ] Приложение открывается внутри iframe
 - [ ] После install flow экран `/` открывается вместо raw JSON
 - [ ] `health.bitrixRest` проходит через `app.info`
+- [ ] `health.bitrixRest.installationComplete = true`
+- [ ] `health.bitrixRest.appInfo.INSTALLED = true`
 - [ ] Для preset `crm-deal-lead-tabs` вкладки видны в сделке и лиде

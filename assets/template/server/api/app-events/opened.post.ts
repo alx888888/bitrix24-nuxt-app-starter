@@ -4,6 +4,7 @@ import {
   getErrorMessage,
   hasB24Context
 } from '~~/shared/server-core/platform/context'
+import { createApiErrorPayload } from '~~/shared/server-core/platform/api-error'
 import { touchPortalOpened } from '~~/shared/server-core/platform/profile'
 
 export default defineEventHandler(async (event) => {
@@ -13,10 +14,10 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: 'Missing Bitrix24 context',
-      data: {
+      data: createApiErrorPayload({
         error: 'MISSING_B24_CONTEXT',
         reason: 'Missing x-b24-* headers or query context'
-      }
+      })
     })
   }
 
@@ -34,10 +35,10 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 503,
       statusMessage: 'Portal profile update unavailable',
-      data: {
+      data: createApiErrorPayload({
         error: 'PROFILE_UPDATE_FAILED',
         reason: getErrorMessage(error, 'Portal profile update failed')
-      }
+      })
     })
   }
 })

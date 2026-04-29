@@ -53,9 +53,15 @@ export const useB24ContextStore = defineStore('b24-context', () => {
     await initialize()
   }
 
+  function markError(message: string | null) {
+    state.value.error = message
+  }
+
   return {
     ready: computed(() => state.value.ready),
     isBitrixFrame: computed(() => state.value.isBitrixFrame),
+    isInstallMode: computed(() => state.value.isInstallMode),
+    isFirstRun: computed(() => state.value.isFirstRun),
     portalDomain: computed(() => state.value.portalDomain),
     memberId: computed(() => state.value.memberId),
     userId: computed(() => state.value.userId),
@@ -64,6 +70,7 @@ export const useB24ContextStore = defineStore('b24-context', () => {
     headers: readonly(headers),
     getRequestHeaders,
     initialize,
-    refresh
+    refresh,
+    markError
   }
 })

@@ -1,3 +1,5 @@
 <template>
-  <NuxtPage />
+  <B24App>
+    <NuxtPage />
+  </B24App>
 </template>

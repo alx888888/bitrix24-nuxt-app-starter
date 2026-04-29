@@ -1,8 +1,11 @@
+import type { B24Frame } from '@bitrix24/b24jssdk'
 import type { LegacyBx24Api } from './sdk-types'
 
 export interface PlatformFrameState {
   ready: boolean
   isBitrixFrame: boolean
+  isInstallMode: boolean
+  isFirstRun: boolean
   portalDomain: string
   memberId: string
   userId: string
@@ -14,6 +17,8 @@ export function createEmptyPlatformFrameState(): PlatformFrameState {
   return {
     ready: false,
     isBitrixFrame: false,
+    isInstallMode: false,
+    isFirstRun: false,
     portalDomain: '',
     memberId: '',
     userId: '',
@@ -56,6 +61,8 @@ export function mergePlatformFrameState(
   return {
     ...current,
     isBitrixFrame: patch.isBitrixFrame ?? current.isBitrixFrame,
+    isInstallMode: patch.isInstallMode ?? current.isInstallMode,
+    isFirstRun: patch.isFirstRun ?? current.isFirstRun,
     portalDomain: normalizePlatformDomain(patch.portalDomain ?? current.portalDomain),
     memberId: String(patch.memberId ?? current.memberId ?? ''),
     userId: String(patch.userId ?? current.userId ?? ''),
@@ -64,18 +71,27 @@ export function mergePlatformFrameState(
   }
 }
 
+async function initializeNuxtB24Frame(): Promise<B24Frame | null> {
+  if (typeof window === 'undefined') return null
+
+  const nuxtApp = useNuxtApp()
+  if (typeof nuxtApp.$initializeB24Frame !== 'function') return null
+
+  return nuxtApp.$initializeB24Frame()
+}
+
 async function readContextFromNuxtSdk(): Promise<Partial<PlatformFrameState>> {
   if (typeof window === 'undefined') return {}
 
   try {
-    const nuxtApp = useNuxtApp()
-    if (typeof nuxtApp.$initializeB24Frame !== 'function') return {}
-
-    const frame = await nuxtApp.$initializeB24Frame()
+    const frame = await initializeNuxtB24Frame()
+    if (!frame) return {}
     const auth = frame?.auth?.getAuthData?.()
 
     return {
       isBitrixFrame: true,
+      isInstallMode: Boolean(frame.isInstallMode),
+      isFirstRun: Boolean(frame.isFirstRun),
       portalDomain: normalizePlatformDomain(auth && typeof auth === 'object' ? auth.domain || '' : ''),
       memberId: String(auth && typeof auth === 'object' ? auth.member_id || '' : ''),
       userId: '',
@@ -151,4 +167,28 @@ export async function resolvePlatformFrameContext(): Promise<Partial<PlatformFra
   })
 
   return initializationPromise
+}
+
+export async function finishPlatformInstallIfNeeded(): Promise<{ supported: boolean; triggered: boolean }> {
+  const frame = await initializeNuxtB24Frame()
+  if (!frame) {
+    return {
+      supported: false,
+      triggered: false
+    }
+  }
+
+  if (!frame.isInstallMode) {
+    return {
+      supported: true,
+      triggered: false
+    }
+  }
+
+  await frame.installFinish()
+
+  return {
+    supported: true,
+    triggered: true
+  }
 }

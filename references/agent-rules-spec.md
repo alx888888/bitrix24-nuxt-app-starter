@@ -3,8 +3,7 @@
 ## Purpose
 
 Generate always-on rules in the target project to constrain AI agents and reduce architectural/UI drift.
-Use `.agents/rules/` as canonical location and optionally mirror the same files into agent-specific folders (for example `.qoder/rules`, `.codex/rules`, `.antigravity/rules`) for compatibility.
-If mirror folders exist, their file set and content should match `.agents/rules/`.
+Use `.agents/rules/` as the canonical location. Do not generate compatibility mirrors.
 
 ## Rule Set
 
@@ -21,6 +20,7 @@ If mirror folders exist, their file set and content should match `.agents/rules/
 Rules should refer to:
 
 - `docs/architecture/invariants.md`
+- `docs/architecture/project-requirements.md`
 - `docs/architecture/api-contracts.md`
 - `docs/architecture/module-map.md`
 - `docs/architecture/extension-points.md`
