@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  modules: ['@bitrix24/b24ui-nuxt', '@pinia/nuxt'],
+  modules: ['@bitrix24/b24ui-nuxt', '@bitrix24/b24jssdk-nuxt', '@pinia/nuxt', '@nuxt/eslint'],
   css: ['~/assets/css/main.css'],
   ssr: false,
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
@@ -15,5 +15,8 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/api/**': { cors: true }
+  },
+  eslint: {
+    checker: false
   }
 })

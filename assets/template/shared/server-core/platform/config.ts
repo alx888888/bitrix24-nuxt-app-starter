@@ -1,0 +1,4 @@
+export const PLATFORM_PROJECT_NAME = '{{PROJECT_NAME}}'
+export const PLATFORM_APP_TITLE = '{{APP_TITLE}}'
+export const PLATFORM_PLACEMENT_PRESET = '{{PLACEMENT_PRESET}}'
+export const PLATFORM_PLACEMENTS = {{PLACEMENTS_JSON}} as string[]

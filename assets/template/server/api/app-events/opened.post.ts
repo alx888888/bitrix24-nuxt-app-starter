@@ -1,12 +1,43 @@
 import { getQuery, getRequestHeaders, createError } from 'h3'
-import { getB24ContextFromHeadersAndQuery } from '~~/shared/server-core/b24-context.js'
-import { touchPortalOpened } from '~~/shared/server-core/portal-profile.js'
+import {
+  getB24ContextFromHeadersAndQuery,
+  getErrorMessage,
+  hasB24Context
+} from '~~/shared/server-core/platform/context'
+import { touchPortalOpened } from '~~/shared/server-core/platform/profile'
 
 export default defineEventHandler(async (event) => {
-  const ctx = getB24ContextFromHeadersAndQuery(getRequestHeaders(event), getQuery(event))
-  if (!ctx.portalDomain && !ctx.memberId && !ctx.authId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing Bitrix24 context', data: { error: 'MISSING_B24_CONTEXT', reason: 'Missing x-b24-* headers' } })
+  const context = getB24ContextFromHeadersAndQuery(getRequestHeaders(event), getQuery(event))
+
+  if (!hasB24Context(context)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Missing Bitrix24 context',
+      data: {
+        error: 'MISSING_B24_CONTEXT',
+        reason: 'Missing x-b24-* headers or query context'
+      }
+    })
   }
-  const profile = await touchPortalOpened(ctx)
-  return { ok: true, profile: { portalDomain: profile?.portal_domain || ctx.portalDomain || '', lastAppOpenedAt: profile?.last_app_opened_at || null } }
+
+  try {
+    const profile = await touchPortalOpened(context)
+    return {
+      ok: true,
+      updated: Boolean(profile),
+      profile: {
+        portalDomain: profile?.portal_domain || context.portalDomain || '',
+        lastAppOpenedAt: profile?.last_app_opened_at || null
+      }
+    }
+  } catch (error: unknown) {
+    throw createError({
+      statusCode: 503,
+      statusMessage: 'Portal profile update unavailable',
+      data: {
+        error: 'PROFILE_UPDATE_FAILED',
+        reason: getErrorMessage(error, 'Portal profile update failed')
+      }
+    })
+  }
 })

@@ -1,26 +1,29 @@
 # Smoke Checklist
 
-## Scaffold
+## Commands
 
-- [ ] Есть `.agents/rules/` и все обязательные rules-файлы
-- [ ] Есть зеркала правил для используемых агентов (`.qoder/.codex/.antigravity`), если включены при scaffold
-- [ ] Есть `AGENTS.md`
-- [ ] Есть `STARTER_MANIFEST.json`
+- [ ] `npm test`
+- [ ] `npm run typecheck`
+- [ ] `npm run build`
 
-## Runtime (локально/деплой)
+## Runtime
 
-- [ ] `GET /api/system/status` отвечает JSON
-- [ ] `components.database.ok = true` после настройки Neon env
-- [ ] `GET /api/app-settings` отвечает контролируемо (с контекстом)
+- [ ] `GET /api/platform/status` отвечает JSON
+- [ ] `/status` открывается и показывает raw JSON payload
 - [ ] `GET /api/b24/install` редиректит на `/api/b24/handler`
 - [ ] `GET|POST /api/b24/handler` редиректит в `/`
+- [ ] Home page `/` не тянет aggregated status payload
 
-## Bitrix24 (после подключения)
+## После настройки Neon
+
+- [ ] `health.database.ok = true` в `/api/platform/status`
+- [ ] `POST /api/app-events/opened` обновляет `lastAppOpenedAt`
+
+## Bitrix24
 
 - [ ] Установка локального server app проходит без ошибки
 - [ ] После `Сохранить` / изменения URL выполнена `Переустановка`
 - [ ] Приложение открывается внутри iframe
-- [ ] После установки не показывается JSON ответ `ONAPPINSTALL` вместо UI (должен открыться экран приложения)
-- [ ] Профиль портала создается/обновляется в Neon
-- [ ] Статус `bitrixRest` проходит через `app.info`
-- [ ] Для preset `crm-deal-lead-tabs` вкладки видны в сделке/лиде
+- [ ] После install flow экран `/` открывается вместо raw JSON
+- [ ] `health.bitrixRest` проходит через `app.info`
+- [ ] Для preset `crm-deal-lead-tabs` вкладки видны в сделке и лиде

@@ -1,99 +1,52 @@
-import { getQuery, getRequestHeader, getRequestURL, readBody, sendRedirect, setResponseStatus } from 'h3'
-import { markPortalProfileUninstalled, upsertPortalProfileOnInstall } from '~~/shared/server-core/portal-profile.js'
+import { defineEventHandler, getQuery, getRequestHeader, getRequestHeaders, getRequestURL, readBody, sendRedirect, setResponseStatus } from 'h3'
+import {
+  getErrorMessage,
+  getB24ContextFromInstallPayload,
+  isB24Payload,
+  pickFlexibleField
+} from '~~/shared/server-core/platform/context'
+import {
+  buildHandlerRedirectUrl,
+  isInstallEvent,
+  isUninstallEvent,
+  pickInstallProfileData,
+  resolveInstallEventName,
+  shouldRedirectInstallResponse
+} from '~~/shared/server-core/platform/install'
+import {
+  markPortalProfileUninstalled,
+  type PlatformProfileRow,
+  upsertPortalProfileOnInstall
+} from '~~/shared/server-core/platform/profile'
+import {
+  PLATFORM_APP_TITLE,
+  PLATFORM_PLACEMENTS,
+  PLATFORM_PLACEMENT_PRESET
+} from '~~/shared/server-core/platform/config'
+import { placementBind, placementUnbind } from '~~/shared/server-core/platform/rest'
 
-const APP_TITLE = '{{APP_TITLE}}'
-const PLACEMENT_PRESET = '{{PLACEMENT_PRESET}}'
-const PLACEMENTS = {{PLACEMENTS_JSON}}
-
-function normalizeDomain(rawDomain: unknown): string {
-  if (!rawDomain || typeof rawDomain !== 'string') return ''
-  return rawDomain.trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')
+interface ProfileSyncResult {
+  ok: boolean
+  action: 'upsert' | 'soft_delete' | null
+  profile?: PlatformProfileRow | null
+  error: string | null
 }
 
-function pickField(payload: any, key: string) {
-  if (!payload || typeof payload !== 'object') return undefined
-  if (payload[key] !== undefined) return payload[key]
-  if (payload[key.toLowerCase()] !== undefined) return payload[key.toLowerCase()]
-  if (payload[key.toUpperCase()] !== undefined) return payload[key.toUpperCase()]
-  for (const candidate of [`auth[${key}]`, `auth[${key.toLowerCase()}]`, `AUTH[${key}]`, `AUTH[${key.toLowerCase()}]`]) {
-    if (payload[candidate] !== undefined) return payload[candidate]
-  }
-  if (payload.auth && typeof payload.auth === 'object') {
-    if (payload.auth[key] !== undefined) return payload.auth[key]
-    if (payload.auth[key.toLowerCase()] !== undefined) return payload.auth[key.toLowerCase()]
-  }
-  return undefined
+interface PlacementResult {
+  placement: string
+  action: 'rebound' | 'unbound'
+  title?: string
+  handler?: string
+  ok?: boolean
+  result: unknown
+  error?: unknown
 }
 
-function isInstallEvent(eventName: unknown) {
-  return String(eventName || '').toUpperCase() === 'ONAPPINSTALL'
-}
-
-function isUninstallEvent(eventName: unknown) {
-  return String(eventName || '').toUpperCase() === 'ONAPPUNINSTALL'
-}
-
-function shouldRedirectToUi(event: any) {
-  const accept = String(getRequestHeader(event, 'accept') || '')
-  const fetchDest = String(getRequestHeader(event, 'sec-fetch-dest') || '')
-  return accept.includes('text/html') || fetchDest === 'iframe' || fetchDest === 'document'
-}
-
-async function callBitrixMethod({ domain, authId, method, params = {} }: any) {
-  const endpoint = `https://${domain}/rest/${method}.json`
-  const body = new URLSearchParams()
-  body.append('auth', String(authId))
-  for (const [key, value] of Object.entries(params)) body.append(key, String(value))
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
-  })
-  let data: any = {}
-  try {
-    data = await response.json()
-  } catch {}
-  return { ok: response.ok && !data?.error, status: response.status, data }
-}
-
-async function unbindPlacement(domain: string, authId: string, placement: string) {
-  return callBitrixMethod({ domain, authId, method: 'placement.unbind', params: { PLACEMENT: placement } })
-}
-
-async function bindPlacement(domain: string, authId: string, placement: string, handlerUrl: string) {
-  return callBitrixMethod({
-    domain,
-    authId,
-    method: 'placement.bind',
-    params: { PLACEMENT: placement, HANDLER: handlerUrl, TITLE: APP_TITLE }
-  })
-}
-
-function inferDomain(payload: any, query: Record<string, any>) {
-  const candidates = [
-    pickField(payload, 'DOMAIN'),
-    pickField(payload, 'domain'),
-    pickField(payload, 'SERVER_NAME'),
-    query.DOMAIN,
-    query.domain
-  ]
-  for (const candidate of candidates) {
-    const normalized = normalizeDomain(candidate)
-    if (normalized) return normalized
-  }
-  return ''
-}
-
-function pickInstallProfileData(payload: any) {
-  return {
-    memberId: pickField(payload, 'member_id') || pickField(payload, 'MEMBER_ID') || '',
-    refreshId: pickField(payload, 'REFRESH_ID') || pickField(payload, 'refresh_id') || '',
-    authExpires: pickField(payload, 'AUTH_EXPIRES') || pickField(payload, 'auth_expires') || '',
-    appSid: pickField(payload, 'APP_SID') || pickField(payload, 'app_sid') || '',
-    placement: pickField(payload, 'PLACEMENT') || pickField(payload, 'placement') || '',
-    scope: pickField(payload, 'scope') || pickField(payload, 'SCOPE') || '',
-    userId: pickField(payload, 'user_id') || pickField(payload, 'USER_ID') || ''
-  }
+interface PlacementBindFailure {
+  placement: string
+  stage: 'bind'
+  unbind: unknown
+  bind: unknown
 }
 
 export default defineEventHandler(async (event) => {
@@ -102,7 +55,7 @@ export default defineEventHandler(async (event) => {
   const host = getRequestHeader(event, 'x-forwarded-host') || getRequestHeader(event, 'host') || url.host || 'localhost:3000'
   const proto = getRequestHeader(event, 'x-forwarded-proto') || url.protocol.replace(':', '') || 'http'
   const appHandlerUrl = `${proto}://${host}/api/b24/handler`
-  const redirectToUi = shouldRedirectToUi(event)
+  const redirectToUi = shouldRedirectInstallResponse(getRequestHeaders(event))
 
   if (method === 'GET') {
     return sendRedirect(event, appHandlerUrl, 307)
@@ -113,19 +66,18 @@ export default defineEventHandler(async (event) => {
     return { ok: false, error: 'METHOD_NOT_ALLOWED', reason: 'Use GET or POST' }
   }
 
-  const payload = (await readBody(event).catch(() => ({}))) || {}
+  const body = await readBody(event).catch(() => ({}))
+  const payload = isB24Payload(body) ? body : {}
   const query = getQuery(event)
-  const rawEventName = pickField(payload, 'event') || pickField(payload, 'EVENT') || query.event || ''
-  const authId = String(pickField(payload, 'AUTH_ID') || pickField(payload, 'auth_id') || query.AUTH_ID || '')
-  const domain = inferDomain(payload, query as any)
-  let eventName = String(rawEventName || '')
-  if (!eventName && authId && domain) eventName = 'ONAPPINSTALL'
+  const context = getB24ContextFromInstallPayload(payload, query as Record<string, unknown>)
+  const rawEventName = pickFlexibleField(payload, 'event') || pickFlexibleField(payload, 'EVENT') || query.event || ''
+  const eventName = resolveInstallEventName({
+    rawEventName,
+    authId: context.authId,
+    portalDomain: context.portalDomain
+  })
 
-  if (!isInstallEvent(eventName) && !isUninstallEvent(eventName)) {
-    return sendRedirect(event, appHandlerUrl, 303)
-  }
-
-  if (!authId || !domain) {
+  if (!context.authId || !context.portalDomain) {
     if (redirectToUi) {
       return sendRedirect(event, appHandlerUrl, 303)
     }
@@ -134,14 +86,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const profileData = pickInstallProfileData(payload)
-  let profileSync: any = { ok: false, action: null, error: null }
+  let profileSync: ProfileSyncResult = { ok: false, action: null, error: null }
   try {
     if (isInstallEvent(eventName)) {
       const row = await upsertPortalProfileOnInstall({
         memberId: profileData.memberId,
-        portalDomain: domain,
-        appTitle: APP_TITLE,
-        authId,
+        portalDomain: context.portalDomain,
+        appTitle: PLATFORM_APP_TITLE,
+        authId: context.authId,
         refreshId: profileData.refreshId,
         authExpires: profileData.authExpires,
         appSid: profileData.appSid,
@@ -154,31 +106,59 @@ export default defineEventHandler(async (event) => {
     } else {
       const row = await markPortalProfileUninstalled({
         memberId: profileData.memberId,
-        portalDomain: domain,
+        portalDomain: context.portalDomain,
         userId: profileData.userId,
         rawPayload: payload
       })
       profileSync = { ok: true, action: 'soft_delete', profile: row, error: null }
     }
-  } catch (e: any) {
-    profileSync = { ok: false, action: isInstallEvent(eventName) ? 'upsert' : 'soft_delete', error: e?.message || 'Profile sync error' }
+  } catch (error: unknown) {
+    profileSync = {
+      ok: false,
+      action: isInstallEvent(eventName) ? 'upsert' : 'soft_delete',
+      error: getErrorMessage(error, 'Profile sync error')
+    }
   }
 
-  const placements: any[] = []
-  const errors: any[] = []
+  if (!isInstallEvent(eventName) && !isUninstallEvent(eventName)) {
+    return sendRedirect(event, appHandlerUrl, 303)
+  }
 
-  if (PLACEMENT_PRESET !== 'none') {
-    for (const placement of PLACEMENTS) {
+  const placements: PlacementResult[] = []
+  const errors: PlacementBindFailure[] = []
+
+  if (PLATFORM_PLACEMENT_PRESET !== 'none') {
+    for (const placement of PLATFORM_PLACEMENTS) {
       if (isInstallEvent(eventName)) {
-        const unbindResult = await unbindPlacement(domain, authId, placement)
-        const bindResult = await bindPlacement(domain, authId, placement, appHandlerUrl)
+        const unbindResult = await placementUnbind({
+          domain: context.portalDomain,
+          authId: context.authId,
+          placement
+        })
+        const bindResult = await placementBind({
+          domain: context.portalDomain,
+          authId: context.authId,
+          placement,
+          handlerUrl: appHandlerUrl,
+          title: PLATFORM_APP_TITLE
+        })
         if (!bindResult.ok) {
           errors.push({ placement, stage: 'bind', unbind: unbindResult.data, bind: bindResult.data })
           continue
         }
-        placements.push({ placement, action: 'rebound', title: APP_TITLE, handler: appHandlerUrl, result: bindResult.data?.result || null })
+        placements.push({
+          placement,
+          action: 'rebound',
+          title: PLATFORM_APP_TITLE,
+          handler: appHandlerUrl,
+          result: bindResult.data?.result || null
+        })
       } else {
-        const unbindResult = await unbindPlacement(domain, authId, placement)
+        const unbindResult = await placementUnbind({
+          domain: context.portalDomain,
+          authId: context.authId,
+          placement
+        })
         placements.push({
           placement,
           action: 'unbound',
@@ -205,13 +185,20 @@ export default defineEventHandler(async (event) => {
   }
 
   if (redirectToUi) {
-    return sendRedirect(event, appHandlerUrl, 303)
+    return sendRedirect(
+      event,
+      buildHandlerRedirectUrl({
+        baseUrl: `${proto}://${host}/`,
+        context
+      }),
+      303
+    )
   }
 
   return {
     ok: true,
     event: String(eventName).toUpperCase(),
-    placementPreset: PLACEMENT_PRESET,
+    placementPreset: PLATFORM_PLACEMENT_PRESET,
     placements,
     profileSync
   }

@@ -1,0 +1,182 @@
+{
+  "requiredFiles": [
+    "AGENTS.md",
+    "README.md",
+    "app.config.ts",
+    "app/pages/index.vue",
+    "app/pages/status.vue",
+    "app/features/home/components/platform-home-screen.vue",
+    "app/features/status/components/platform-status-screen.vue",
+    "app/features/status/use-platform-status.ts",
+    "app/features/platform-frame/runtime.ts",
+    "app/features/platform-frame/sdk-types.ts",
+    "app/stores/b24-context.ts",
+    "app/composables/use-platform-bootstrap.ts",
+    "server/api/b24/install.ts",
+    "server/api/b24/handler.ts",
+    "server/api/platform/status.get.ts",
+    "server/api/app-events/opened.post.ts",
+    "shared/app-contract/platform-status.ts",
+    "shared/server-core/platform/context.ts",
+    "shared/server-core/platform/db.ts",
+    "shared/server-core/platform/profile.ts",
+    "shared/server-core/platform/rest.ts",
+    "shared/server-core/platform/install.ts",
+    "shared/server-core/platform/status.ts",
+    "docs/architecture/invariants.md",
+    "docs/architecture/api-contracts.md",
+    "docs/architecture/module-map.md",
+    "docs/architecture/extension-points.md",
+    "docs/architecture/capability-map.md",
+    "docs/architecture/placement-presets.md",
+    "docs/checklists/smoke.md",
+    "docs/reference/b24ui-llms-full.txt",
+    "docs/reference/bitrix24_dev_resources.md",
+    "docs/reference/official-stack-map.md",
+    "scripts/starter-contract.json",
+    "scripts/validate-starter-contract.mjs",
+    "tests/unit/platform-status.test.ts",
+    "tests/unit/install-flow.test.ts",
+    "tests/unit/install-route.test.ts",
+    "tests/unit/handler-route.test.ts",
+    "tests/unit/status-route.test.ts",
+    "tests/unit/platform-frame.test.ts",
+    "tests/unit/scaffold-contract.test.ts",
+    "tests/nuxt/status-screen.test.ts",
+    "types/b24-nuxt.d.ts"
+  ],
+  "forbiddenFiles": [
+    "api",
+    "server/api/system/status.get.ts",
+    "server/api/app-settings.get.ts",
+    "app/components/status-panel.vue",
+    "app/stores/system-status.ts",
+    "app/stores/app-settings.ts",
+    "shared/server-core/app-settings.js",
+    "shared/server-core/db.js",
+    "shared/server-core/portal-profile.js"
+  ],
+  "requiredMarkersByFile": {
+    "AGENTS.md": [
+      "/api/platform/status",
+      "/status",
+      "docs/architecture/module-map.md",
+      "docs/architecture/extension-points.md"
+    ],
+    "README.md": [
+      "/api/platform/status",
+      "/status"
+    ],
+    "docs/architecture/api-contracts.md": [
+      "/api/platform/status"
+    ],
+    "docs/architecture/invariants.md": [
+      "/api/platform/status",
+      "/status"
+    ],
+    "docs/architecture/module-map.md": [
+      "/api/platform/status",
+      "shared/server-core/platform/*",
+      "shared/app-contract/*"
+    ],
+    "docs/architecture/extension-points.md": [
+      "shared/server-core/<capability>/*",
+      "module-map.md",
+      "capability-map.md",
+      "api-contracts.md",
+      "smoke.md"
+    ],
+    "docs/architecture/capability-map.md": [
+      "placements",
+      "bot",
+      "bizproc activity",
+      "IM/message flow",
+      "CRM integration",
+      "background jobs"
+    ],
+    "docs/architecture/placement-presets.md": [
+      "none",
+      "crm-deal-lead-tabs",
+      "placement.bind",
+      "/api/b24/install"
+    ],
+    "docs/checklists/smoke.md": [
+      "/api/platform/status",
+      "/status"
+    ],
+    "docs/reference/official-stack-map.md": [
+      "starter-b24ui",
+      "@bitrix24/b24ui-nuxt",
+      "@bitrix24/b24jssdk-nuxt",
+      "bitrix24-dev-hub"
+    ],
+    "docs/reference/bitrix24_dev_resources.md": [
+      "server/api/b24/install.ts",
+      "shared/server-core/platform/context.ts",
+      "app/composables/use-platform-bootstrap.ts"
+    ]
+  },
+  "forbiddenDocMarkers": [
+    "/api/system/status",
+    "/api/app-settings"
+  ],
+  "staleReferenceMarkers": [
+    "ATI2/",
+    "useAppBootstrap.ts",
+    "shared/server-core/app-settings.js",
+    "api/b24/install.js",
+    "api/b24/handler.js"
+  ],
+  "staleCheckFiles": [
+    "AGENTS.md",
+    "README.md",
+    "docs/architecture/invariants.md",
+    "docs/architecture/api-contracts.md",
+    "docs/architecture/module-map.md",
+    "docs/architecture/extension-points.md",
+    "docs/architecture/capability-map.md",
+    "docs/architecture/placement-presets.md",
+    "docs/checklists/smoke.md",
+    "docs/reference/bitrix24_dev_resources.md",
+    "docs/reference/official-stack-map.md"
+  ],
+  "forbiddenRawUiTokens": [
+    "rounded",
+    "border-",
+    "bg-",
+    "shadow",
+    "ring-",
+    "text-gray",
+    "text-slate"
+  ],
+  "allowedLayoutTokens": [
+    "min-h-screen",
+    "px-4",
+    "py-6",
+    "mx-auto",
+    "max-w-4xl",
+    "max-w-5xl",
+    "flex",
+    "flex-wrap",
+    "flex-col",
+    "items-start",
+    "justify-between",
+    "gap-3",
+    "gap-4",
+    "gap-6",
+    "overflow-x-auto",
+    "whitespace-pre-wrap",
+    "w-full"
+  ],
+  "uiRoots": [
+    "app/pages",
+    "app/features",
+    "app/components"
+  ],
+  "canonicalRulesDir": ".agents/rules",
+  "mirrorRuleDirs": [
+    ".qoder/rules",
+    ".codex/rules",
+    ".antigravity/rules"
+  ]
+}

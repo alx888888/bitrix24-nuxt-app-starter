@@ -1,21 +1,39 @@
 # Architecture Invariants
 
-## Bitrix24 install/handler
+## Platform shape
 
-1. `api/b24/install` и `api/b24/handler` раздельны.
-2. `api/b24/handler` принимает `GET|POST` и редиректит в `/`.
-3. `api/b24/install` принимает `POST`; если `event` пустой, но есть `AUTH_ID` и `DOMAIN`, трактовать как `ONAPPINSTALL`.
-4. После успешного `ONAPPINSTALL` в iframe/document запросе `api/b24/install` должен редиректить в `api/b24/handler` (не показывать JSON).
-5. Для preset `crm-deal-lead-tabs` bind выполнять идемпотентно: `placement.unbind -> placement.bind`.
+1. Starter profile: `platform-only`.
+2. Domain capability code по умолчанию не генерируется.
+3. `server/api/*` — thin adapters.
+4. Платформенная логика живет в `shared/server-core/platform/*`.
+5. Shared contract types живут в `shared/app-contract/*`.
 
-## Shared server core
+## Bitrix24 flow
 
-1. Платформенная логика живет в `shared/server-core/*`.
-2. Реализация эндпоинтов находится в `server/api/*` (Nitro, используется локально и на Vercel).
-3. Не создавать дублирующие root `api/b24/*` Vercel functions вместе с `server/api/b24/*`.
-4. Не дублировать логику profile lifecycle и B24 context parsing.
+1. `/api/b24/install` и `/api/b24/handler` раздельны.
+2. `/api/b24/install` поддерживает fallback `ONAPPINSTALL`.
+3. `/api/b24/handler` редиректит в `/` и переносит только safe B24 context.
+4. B24 frame init идет через один bootstrap path:
+   - `app/features/platform-frame/*`
+   - `app/stores/b24-context.ts`
+   - `app/composables/use-platform-bootstrap.ts`
+5. Прямой вызов SDK из случайных компонентов не допускается.
 
-## Contracts and docs
+## Status policy
 
-1. Изменения `/api/system/status` и `/api/app-settings` синхронизировать с `docs/architecture/api-contracts.md`.
-2. Изменения preset placements синхронизировать с `docs/architecture/placement-presets.md` и `STARTER_MANIFEST.json`.
+1. `/api/platform/status` — единственный aggregated status endpoint.
+2. `/status` — отдельная JSON-only страница.
+3. Home page `/` status payload не читает.
+4. Legacy status endpoints в active docs и active code не входят.
+
+## UI policy
+
+1. Visual primitives — только official `b24ui` и `b24icons`.
+2. Raw HTML допускается только для route shell, layout glue и slot wrapper.
+3. `app/assets/css/main.css` держит только official imports и технический reset.
+
+## Docs and tests
+
+1. Новый функционал начинается с теста или acceptance-case.
+2. Change set без `npm test`, `npm run typecheck`, `npm run build` не закрывается, кроме явного блокера.
+3. API contract, module map, extension points, placement presets и smoke checklist синхронизируются в том же изменении.

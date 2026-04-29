@@ -3,7 +3,9 @@ trigger: always_on
 ---
 
 API и типы:
+- Для Bitrix24 REST сигнатур, параметров и ошибок использовать официальные источники по маршруту из `docs/reference/bitrix24_dev_resources.md`; не фиксировать API по памяти.
 - Любое изменение API endpoint'ов требует обновления TS-типов и `docs/architecture/api-contracts.md`.
-- Не менять shape `/api/system/status` без явного обновления контрактов и README.
+- Не возвращать `/api/system/status` и `/api/app-settings`.
+- Не менять shape `/api/platform/status` без явного обновления контрактов, README и `/status`.
 - Ошибки должны быть контролируемыми: использовать поля `error`, `reason`, при необходимости `details`.
 - UI не должен парсить сырые ответы Bitrix REST напрямую; использовать серверную нормализацию.

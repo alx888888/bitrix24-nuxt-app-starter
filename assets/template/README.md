@@ -1,83 +1,97 @@
-# {{APP_TITLE}} (Bitrix24 Starter)
+# {{APP_TITLE}}
 
-Стартовый проект Bitrix24 local server app на `Nuxt + B24UI + Vercel + Neon`.
+Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neon`.
 
-## Что умеет стартер
+## Что входит в starter
 
-- `api/b24/install` и `api/b24/handler` для локального server app
-- Neon profile lifecycle (профиль портала создается/обновляется)
-- Статусная панель системы (`/api/system/status` + UI)
-- Guardrails для AI-агентов (`.agents/rules`, зеркала `.qoder/.codex/.antigravity`, `AGENTS.md`, `STARTER_MANIFEST.json`)
+- `GET|POST /api/b24/handler`
+- `POST /api/b24/install`
+- `POST /api/app-events/opened`
+- `GET /api/platform/status`
+- страница `/status` с raw JSON payload
+- `.agents/rules/*`, совместимые зеркала и шаблонный `AGENTS.md`
+- source-of-truth docs для architecture, contracts, extension points и smoke
+- test harness на `vitest` + `@nuxt/test-utils`
 
-## Архитектура
+## Модульные слои
 
-- `app/*` — UI и клиентская orchestration логика
-- `server/api/*` — Nitro endpoints (локально и на Vercel)
-- `shared/server-core/*` — общая платформенная логика
-- `docs/architecture/*` — source of truth для инвариантов и контрактов
+- `app/pages/*` — route shell.
+- `app/features/*` — UI и client orchestration.
+- `app/stores/*` — B24 context state.
+- `server/api/*` — thin Nitro adapters.
+- `shared/server-core/platform/*` — install/handler flow, Neon profile lifecycle, status aggregation и Bitrix REST wrappers.
+- `shared/app-contract/*` — shared DTO и contract types.
+- `docs/architecture/*` — source of truth.
+- `docs/reference/*` — official routing map и B24UI reference.
 
-## Bitrix24 install flow
+## Стартовые маршруты
 
-- Handler path: `https://<domain>/api/b24/handler`
-- Install path: `https://<domain>/api/b24/install`
-- Preset placements: `{{PLACEMENT_PRESET}}` (`{{PLACEMENT_PRESET_DESCRIPTION}}`)
+- `/` — home shell без чтения aggregated status payload.
+- `/status` — отдельная status page.
+- `/api/platform/status` — aggregated platform status contract.
+- `/api/b24/install` — install endpoint.
+- `/api/b24/handler` — handler endpoint.
+- `/api/app-events/opened` — best-effort touch `lastAppOpenedAt`.
 
-## Переменные окружения
-
-- `DATABASE_URL` — Neon Postgres
-- `APP_SECRETS_KEY` — ключ шифрования секретов (технический ключ приложения)
-- `APP_BASE_URL` — базовый URL приложения (опционально; для диагностики/локальной документации)
-
-## Локальный запуск
+## Локальный старт
 
 ```bash
 npm install
+npm test
+npm run typecheck
+npm run build
 npm run dev
 ```
+
+## Переменные окружения
+
+- `DATABASE_URL` или `POSTGRES_URL` или `STORAGE_URL` — Neon Postgres.
+- `APP_SECRETS_KEY` — технический ключ приложения.
+- `APP_BASE_URL` — базовый URL приложения.
 
 ## Vercel + Neon
 
 1. Задеплойте проект в Vercel.
-2. Создайте отдельную Neon DB для этого проекта в `Vercel -> Storage -> Create Database`.
-3. Нажмите `Connect Project`, выберите этот проект, оставьте `Development/Preview/Production`.
-4. В `Custom Prefix` укажите `POSTGRES` (или вручную добавьте `DATABASE_URL` позже).
-5. Добавьте `APP_SECRETS_KEY` в Environment Variables.
+2. Создайте отдельную Neon DB в `Vercel -> Storage`.
+3. Подключите DB к этому же проекту.
+4. Prefix для env: `POSTGRES`, либо добавьте `DATABASE_URL` вручную.
+5. Добавьте `APP_SECRETS_KEY`.
 6. Добавьте `APP_BASE_URL=https://<domain>`.
-7. Сделайте `Redeploy` и проверьте `/api/system/status`.
+7. Сделайте redeploy.
+8. Проверьте `/status` и `/api/platform/status`.
 
-## Установка в Bitrix24 (локальное серверное приложение)
+## Установка в Bitrix24
 
-- `Путь вашего обработчика`: `https://<domain>/api/b24/handler`
-- `Путь для первоначальной установки`: `https://<domain>/api/b24/install`
+- handler path: `https://<domain>/api/b24/handler`
+- install path: `https://<domain>/api/b24/install`
+- preset placements: `{{PLACEMENT_PRESET}}`
 
-После изменения URL/настроек приложения в Bitrix24:
+После изменения URL:
 
-1. Нажмите `Сохранить`
-2. Нажмите `Переустановить`
-3. Откройте приложение через `Перейти к приложению`
+1. `Сохранить`
+2. `Переустановить`
+3. `Перейти к приложению`
 
-Рекомендуемые scope:
+Scope:
 
-- `placement`
-- `crm` (если используете preset с CRM tabs)
+- `placement` — только если preset включает placement bind.
+- `crm` — только если capability требует CRM REST.
 
-## Что видно при первом открытии
+## Правила разработки
 
-- статус backend
-- статус базы (Neon)
-- статус installer flow
-- статус профиля портала
-- статус REST (`app.info`)
-- статус placements (если preset != `none`)
+- Visual primitives только через official `b24ui` и `b24icons`.
+- `main.css` держит только imports и технический reset.
+- Новый функционал: сначала тест или acceptance-case, затем реализация.
+- Любой сдвиг API, module map, extension points, placement preset и smoke contour идет вместе с docs sync.
 
-## Правила разработки UI
+## Где искать source of truth
 
-- Использовать только официальные компоненты `b24ui` и иконки `b24icons`.
-- Не делать костыли верстки, не обходить возможности компонентов кастомными стилями/скриптами.
-- Подсказка по компонентам: `b24ui-llms-full.txt`.
-
-## Работа с AI-агентами
-
-- Канонические правила: `.agents/rules/`
-- Совместимые зеркала (если сгенерированы): `.qoder/rules/`, `.codex/rules/`, `.antigravity/rules/`
-- Перед изменениями читать: `docs/architecture/*`, `STARTER_MANIFEST.json`, `AGENTS.md`
+- `AGENTS.md`
+- `docs/architecture/invariants.md`
+- `docs/architecture/api-contracts.md`
+- `docs/architecture/module-map.md`
+- `docs/architecture/extension-points.md`
+- `docs/architecture/capability-map.md`
+- `docs/checklists/smoke.md`
+- `docs/reference/bitrix24_dev_resources.md`
+- `docs/reference/official-stack-map.md`

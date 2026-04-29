@@ -4,20 +4,22 @@
 
 ## `none`
 
-- Без автоматической регистрации CRM placement tabs.
-- Сохраняется install/uninstall profile lifecycle.
+- Только platform core.
+- Automatic placement bind отсутствует.
 
 ## `crm-deal-lead-tabs`
 
-- Регистрирует вкладки:
+- Register:
   - `CRM_DEAL_DETAIL_TAB`
   - `CRM_LEAD_DETAIL_TAB`
-- Использует idempotent bind (`unbind -> bind`).
+- Bind policy: `placement.unbind -> placement.bind`.
+- Точка входа: `/api/b24/install`.
 
 ## Правило изменений
 
-Если меняется список placement'ов или логика preset, обновить:
+Если меняется список placement или preset flow, обновить:
 
+- `shared/server-core/platform/install.ts`
 - `server/api/b24/install.ts`
+- `placement.bind` / `placement.unbind` вызовы и их error policy
 - `docs/architecture/placement-presets.md`
-- `STARTER_MANIFEST.json`
