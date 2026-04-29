@@ -3,15 +3,16 @@
 1. Deploy the generated project to Vercel.
 2. Connect Neon storage and confirm Vercel injected `DATABASE_URL` or `POSTGRES_URL`.
 3. Add business/API keys only through Vercel Project Environment Variables.
-4. Run `npm run verify`.
-5. Open `/`, `/status`, and `/api/platform/status`.
-6. Confirm `/status` shows the raw JSON payload from `/api/platform/status`.
-7. In Bitrix24 Local Server App settings:
+4. Run `npm run db:migrate` with the target DB env.
+5. Run `npm run verify`.
+6. Open `/`, `/status`, and `/api/platform/status`.
+7. Confirm `/status` shows the raw JSON payload from `/api/platform/status`.
+8. In Bitrix24 Local Server App settings:
    - handler path: `https://<domain>/api/b24/handler`
    - install path: `https://<domain>/api/b24/install`
-8. Install app and open it.
-9. Confirm portal profile row exists in Neon.
-10. Confirm `health.database`, `health.bitrixRest`, and `health.bitrixRest.installationComplete = true` in `/api/platform/status`.
+9. Install app and open it.
+10. Confirm portal profile row exists in Neon.
+11. Confirm `health.database`, `health.bitrixRest`, and `health.bitrixRest.installationComplete = true` in `/api/platform/status`.
 
 ## If you changed the skill itself
 

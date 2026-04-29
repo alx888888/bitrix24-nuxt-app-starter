@@ -11,6 +11,8 @@ Create a new Bitrix24 local server app starter in an empty folder using a script
 
 Use this skill when the user wants a new Bitrix24 app foundation on Nuxt/B24UI/Vercel/Neon, not when adding business features to an existing app.
 
+Runtime contract: Node.js `>=22.12.0 <25`, npm only, generated `.nvmrc`/`.node-version` and `package.json#engines`.
+
 ## Workflow
 
 1. Ask short setup questions: target folder, app title, overwrite yes/no if needed.
@@ -53,6 +55,10 @@ Use this skill when the user wants a new Bitrix24 app foundation on Nuxt/B24UI/V
   - B24UI-only checks for raw UI tags, inline styles and style blocks
   - import-boundary checks between UI, route adapters, contracts and server core
   - unified API error contract
+- Tooling:
+  - `npm run db:migrate` for explicit Neon schema setup
+  - `npm run capability:create -- <capability-name>` for skeleton-only bounded module creation
+  - `npm run verify` for test/lint/typecheck/build/contract validation
 
 ## Script usage
 
@@ -79,10 +85,10 @@ Important:
 
 - Default placement preset: `none`.
 - Default guardrails profile: `strict-b24`.
-- Default rule target: `agents`.
 - `.agents/rules` stays canonical.
 - Root `api/*` functions are not scaffolded.
 - Prefer a dedicated Neon database per app project.
+- Placement presets are defined in `references/placement-presets.json`.
 - `scripts/validate_starter_contract.py --root <generated-project>` provides a standalone contract check.
 
 ## References Map
@@ -95,12 +101,13 @@ Read only what you need:
 - Deploy checklist: `references/post-deploy-checklist.md`
 - Bitrix24 resources map (official docs routing): `assets/template/docs/reference/bitrix24_dev_resources.md`
 - B24UI starter guide: `assets/template/docs/reference/b24ui-starter-guide.md`
-- B24UI component guide (large, skill reference only): `references/b24ui-llms-full.txt`
+- B24UI agent guide: `references/b24ui-agent-guide.md`
+- B24UI full upstream dump (raw, skill reference only): `references/raw/b24ui-llms-full.txt`
 
-For B24UI lookup, prefer grep:
+For B24UI lookup, start with the curated guide. Use grep against the raw dump only for exact upstream signatures:
 
 ```bash
-rg -n "B24(Button|Badge|Table|Input|FormField)" references/b24ui-llms-full.txt
+rg -n "B24(Button|Badge|Table|Input|FormField)" references/raw/b24ui-llms-full.txt
 ```
 
 ## Tooling and External Sources

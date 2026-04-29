@@ -4,6 +4,7 @@
 
 - Проект: Bitrix24 local server app на Nuxt + B24UI + B24 JS SDK + Vercel + Neon.
 - Профиль starter: `platform-only`.
+- Runtime contract: Node.js `>=22.12.0 <25`, npm `>=10`, package manager только npm.
 
 ## Обязательный порядок чтения перед изменениями
 
@@ -44,6 +45,8 @@
 - Legacy status endpoints не возвращать и в active docs не упоминать.
 - `/api/platform/status` и страница `/status` идут в одном change set с docs sync.
 - Новый функционал начинать с теста или acceptance-case, затем писать реализацию.
+- Новый bounded module начинать через `npm run capability:create -- <capability-name>` или эквивалентный skeleton с теми же границами.
+- Schema setup для production выполнять через `npm run db:migrate`; runtime schema ensure использовать только как safety net.
 - Change set без обновленного теста и `npm run verify` не закрывать. Если проверка недоступна, это фиксировать в отчете.
 
 ## Обязательная синхронизация docs

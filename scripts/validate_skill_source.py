@@ -3,18 +3,28 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import sys
+import tempfile
 from pathlib import Path
+
+sys.dont_write_bytecode = True
+
+from validate_starter_contract import validate_project_root
 
 
 CANONICAL_REFERENCE_FILES = [
     'assets/template/docs/reference/bitrix24_dev_resources.md',
     'assets/template/docs/reference/b24ui-starter-guide.md',
     'assets/template/docs/reference/official-stack-map.md',
-    'references/b24ui-llms-full.txt',
+    'references/b24ui-agent-guide.md',
+    'references/raw/b24ui-llms-full.txt',
+    'references/placement-presets.json',
 ]
 
 FORBIDDEN_SKILL_FILES = [
     'references/bitrix24_dev_resources.md',
+    'references/b24ui-llms-full.txt',
 ]
 
 SKILL_REQUIRED_MARKERS = {
@@ -22,9 +32,14 @@ SKILL_REQUIRED_MARKERS = {
         'docs/architecture/project-requirements.md',
         'assets/template/docs/reference/bitrix24_dev_resources.md',
         'assets/template/docs/reference/b24ui-starter-guide.md',
-        'references/b24ui-llms-full.txt',
+        'references/b24ui-agent-guide.md',
+        'references/raw/b24ui-llms-full.txt',
+        'references/placement-presets.json',
         'exact `.agents/rules` file set',
         'import-boundary checks',
+        'Node.js',
+        'npm run db:migrate',
+        'npm run capability:create',
         'npm run verify',
         'scripts/validate_skill_source.py',
         'scripts/validate_starter_contract.py',
@@ -34,6 +49,7 @@ SKILL_REQUIRED_MARKERS = {
         '/api/platform/status',
         '/status',
         'assets/template/docs/reference/*',
+        'references/raw/b24ui-llms-full.txt',
         'docs/architecture/project-requirements.md'
     ],
     'references/post-deploy-checklist.md': [
@@ -71,6 +87,7 @@ RULE_REQUIRED_MARKERS = {
     '40-data-neon-profile-lifecycle.md': [
         'Developer/API keys',
         'Bitrix24 runtime-токены',
+        'npm run db:migrate',
         'ADD COLUMN IF NOT EXISTS'
     ],
     '50-api-and-types-discipline.md': [
@@ -102,6 +119,14 @@ def validate_skill_root(root: Path) -> None:
     for relative in FORBIDDEN_SKILL_FILES:
         if (root / relative).exists():
             problems.append(f'Forbidden duplicate reference file present: {relative}')
+
+    for pycache_dir in root.rglob('__pycache__'):
+        if pycache_dir.is_dir():
+            problems.append(f'Forbidden Python cache directory present: {pycache_dir.relative_to(root)}')
+
+    for pyc_file in root.rglob('*.pyc'):
+        if pyc_file.is_file():
+            problems.append(f'Forbidden Python bytecode file present: {pyc_file.relative_to(root)}')
 
     stale_markers = [str(marker) for marker in contract.get('staleReferenceMarkers', [])]
     stale_check_files = ['SKILL.md', *SKILL_REQUIRED_MARKERS.keys()]
@@ -145,6 +170,18 @@ def validate_skill_root(root: Path) -> None:
         for marker in markers:
             if marker not in text:
                 problems.append(f'Required marker missing in rule {filename}: {marker}')
+
+    try:
+        with tempfile.TemporaryDirectory(prefix='b24-skill-template-') as temp_name:
+            temp_root = Path(temp_name)
+            shutil.copytree(root / 'assets' / 'template', temp_root, dirs_exist_ok=True)
+            temp_rules = temp_root / '.agents' / 'rules'
+            temp_rules.mkdir(parents=True, exist_ok=True)
+            for file in sorted(rules_dir.glob('*.md')):
+                shutil.copy2(file, temp_rules / file.name)
+            validate_project_root(temp_root)
+    except Exception as error:
+        problems.append(f'Template contract validation failed: {error}')
 
     if problems:
         raise RuntimeError('\n'.join(sorted(set(problems))))

@@ -19,6 +19,7 @@
 
 ## После настройки Neon
 
+- [ ] `npm run db:migrate` прошел с production/staging DB env
 - [ ] `health.database.ok = true` в `/api/platform/status`
 - [ ] `POST /api/app-events/opened` обновляет `lastAppOpenedAt`
 

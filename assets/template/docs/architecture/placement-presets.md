@@ -2,6 +2,8 @@
 
 Текущий preset: `{{PLACEMENT_PRESET}}`
 
+Preset registry поддерживается в skill source: `references/placement-presets.json`.
+
 ## `none`
 
 - Только platform core.

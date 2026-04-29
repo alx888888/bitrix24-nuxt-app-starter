@@ -35,6 +35,14 @@ The portal profile updates on install and on app open. Portal identity source of
 
 - Default scaffold: no bot, no bizproc, no IM flow, no CRM capability code.
 - Capability growth goes through docs + extension points first, then modules.
+- Generated projects include `npm run capability:create -- <capability-name>` for skeleton-only bounded module creation.
+
+## Runtime and DB policy
+
+- Generated projects target Node.js `>=22.12.0 <25` and npm.
+- `npm run db:migrate` is the explicit Neon schema setup path.
+- Runtime schema ensure remains an idempotent first-run safety net, not the preferred production migration path.
+- Placement presets come from `references/placement-presets.json`.
 
 ## Enforcement policy
 
@@ -45,6 +53,7 @@ The portal profile updates on install and on app open. Portal identity source of
 ## Canonical references
 
 - Generated project reference docs live in `assets/template/docs/reference/*`.
-- Large B24UI reference docs live in `references/b24ui-llms-full.txt` and are not copied into generated projects.
+- Curated B24UI usage guidance lives in `references/b24ui-agent-guide.md`.
+- Large B24UI reference docs live in `references/raw/b24ui-llms-full.txt` and are not copied into generated projects.
 - `SKILL.md` should route readers to those canonical files instead of parallel copies in `references/*`.
 - Human-readable проектные требования и anti-pattern policy живут в `docs/architecture/project-requirements.md`.

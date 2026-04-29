@@ -8,28 +8,18 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 from validate_starter_contract import validate_project_root
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_DIR = SKILL_ROOT / 'assets' / 'template'
 RULES_ROOT = SKILL_ROOT / 'assets' / 'rules'
+PLACEMENT_PRESETS_PATH = SKILL_ROOT / 'references' / 'placement-presets.json'
 
-PLACESETS = {
-    'none': {
-        'placements': [],
-        'description': 'Platform-only starter without automatic placement bind',
-    },
-    'crm-deal-lead-tabs': {
-        'placements': ['CRM_DEAL_DETAIL_TAB', 'CRM_LEAD_DETAIL_TAB'],
-        'description': 'Idempotent placement bind for CRM deal and lead tabs',
-    },
-}
+PLACESETS = json.loads(PLACEMENT_PRESETS_PATH.read_text(encoding='utf-8'))
 
 TEXT_EXTS = {'.md', '.json', '.js', '.ts', '.vue', '.css', '.env', '.example', '.yaml', '.yml', '.mjs'}
-
-TARGET_RULE_DIRS = {
-    'agents': Path('.agents/rules'),
-}
 
 
 def parse_args():
@@ -39,7 +29,6 @@ def parse_args():
     parser.add_argument('--app-title', required=True)
     parser.add_argument('--placement-preset', default='none', choices=sorted(PLACESETS.keys()))
     parser.add_argument('--agent-rules-profile', default='strict-b24')
-    parser.add_argument('--agent-rules-targets', default='agents')
     parser.add_argument('--init-git', action='store_true')
     parser.add_argument('--overwrite', action='store_true')
     return parser.parse_args()
@@ -83,23 +72,19 @@ def render_text_files(root: Path, replacements: dict[str, str]):
             path.write_text(rendered, encoding='utf-8')
 
 
-def copy_rules(project_root: Path, profile: str, targets: str):
+def copy_rules(project_root: Path, profile: str):
     created: list[str] = []
     src = RULES_ROOT / profile / 'agents'
     if not src.exists():
         print(f'[ERROR] Rules profile not found: {profile}', file=sys.stderr)
         sys.exit(4)
 
-    for target in [item.strip() for item in targets.split(',') if item.strip()]:
-        rule_dir = TARGET_RULE_DIRS.get(target)
-        if not rule_dir:
-            print(f'[WARN] unknown agent rules target skipped: {target}')
-            continue
-        dst = project_root / rule_dir
-        dst.mkdir(parents=True, exist_ok=True)
-        for file in sorted(src.glob('*.md')):
-            shutil.copy2(file, dst / file.name)
-            created.append(str(rule_dir / file.name))
+    rule_dir = Path('.agents/rules')
+    dst = project_root / rule_dir
+    dst.mkdir(parents=True, exist_ok=True)
+    for file in sorted(src.glob('*.md')):
+        shutil.copy2(file, dst / file.name)
+        created.append(str(rule_dir / file.name))
     return created
 
 
@@ -126,7 +111,7 @@ def main():
     }
 
     render_text_files(target, replacements)
-    rules_created = copy_rules(target, args.agent_rules_profile, args.agent_rules_targets)
+    rules_created = copy_rules(target, args.agent_rules_profile)
     validate_project_root(target)
 
     if args.init_git:
@@ -143,9 +128,10 @@ def main():
     print('  3. npm run dev')
     print('  4. Vercel: deploy project')
     print('  5. Vercel Storage: Create Neon DB -> Connect Project -> prefix POSTGRES (or set DATABASE_URL manually)')
-    print('  6. Vercel: redeploy after storage env injection')
-    print('  7. Check https://<domain>/status and https://<domain>/api/platform/status')
-    print('  8. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
+    print('  6. Run npm run db:migrate with the target DB env')
+    print('  7. Vercel: redeploy after storage env injection')
+    print('  8. Check https://<domain>/status and https://<domain>/api/platform/status')
+    print('  9. Bitrix24 local app: handler=/api/b24/handler, install=/api/b24/install -> Save -> Reinstall')
 
 
 if __name__ == '__main__':

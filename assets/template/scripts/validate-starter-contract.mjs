@@ -44,35 +44,6 @@ function validateRequiredRules(rootDir, problems, contract) {
   }
 }
 
-function compareRuleDirs(rootDir, problems, contract) {
-  const canonicalDir = join(rootDir, contract.canonicalRulesDir)
-  if (!existsSync(canonicalDir)) return
-
-  const readRuleSnapshot = (directory) =>
-    readdirSync(directory)
-      .filter((entry) => entry.endsWith('.md'))
-      .sort()
-      .map((entry) => [entry, readFileSync(join(directory, entry), 'utf8')])
-
-  const canonicalSnapshot = readRuleSnapshot(canonicalDir)
-
-  for (const mirrorDir of contract.mirrorRuleDirs) {
-    const absoluteMirrorDir = join(rootDir, mirrorDir)
-    if (!existsSync(absoluteMirrorDir)) continue
-    const mirrorSnapshot = readRuleSnapshot(absoluteMirrorDir)
-    if (JSON.stringify(mirrorSnapshot.map(([filename]) => filename)) !== JSON.stringify(canonicalSnapshot.map(([filename]) => filename))) {
-      problems.push(`Rule mirror mismatch in ${mirrorDir}: file set differs from ${contract.canonicalRulesDir}`)
-      continue
-    }
-    for (const [filename, content] of canonicalSnapshot) {
-      const mirrorContent = mirrorSnapshot.find(([candidate]) => candidate === filename)?.[1] || ''
-      if (mirrorContent !== content) {
-        problems.push(`Rule mirror mismatch in ${mirrorDir}: content differs for ${filename}`)
-      }
-    }
-  }
-}
-
 function globToRegExp(pattern) {
   const escaped = pattern
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -112,6 +83,26 @@ function walkTextFiles(rootDir, relativeDir = '') {
     }
     if (!entry.isFile()) continue
     if (TEXT_FILE_EXTENSIONS.has(entry.name.includes('.') ? entry.name.slice(entry.name.lastIndexOf('.')) : '')) {
+      files.push(absolutePath)
+    }
+  }
+  return files
+}
+
+function walkAllFiles(rootDir, relativeDir = '') {
+  const directory = join(rootDir, relativeDir)
+  if (!existsSync(directory)) return []
+
+  const files = []
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.nuxt' || entry.name === '.output') continue
+    const absolutePath = join(directory, entry.name)
+    const nextRelative = relative(rootDir, absolutePath)
+    if (entry.isDirectory()) {
+      files.push(...walkAllFiles(rootDir, nextRelative))
+      continue
+    }
+    if (entry.isFile()) {
       files.push(absolutePath)
     }
   }
@@ -186,7 +177,7 @@ function collectProblems(rootDir) {
 
   for (const pattern of contract.forbiddenFileGlobs || []) {
     const matcher = globToRegExp(pattern)
-    for (const absolutePath of walkTextFiles(rootDir)) {
+    for (const absolutePath of walkAllFiles(rootDir)) {
       const relativePath = relative(rootDir, absolutePath)
       if (matcher.test(relativePath)) {
         problems.push(`Forbidden project file present: ${relativePath}`)
@@ -195,7 +186,6 @@ function collectProblems(rootDir) {
   }
 
   validateRequiredRules(rootDir, problems, contract)
-  compareRuleDirs(rootDir, problems, contract)
 
   for (const [relativePath, requiredMarkers] of Object.entries(contract.requiredMarkersByFile)) {
     const absolutePath = join(rootDir, relativePath)

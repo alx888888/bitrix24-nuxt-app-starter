@@ -2,6 +2,8 @@
   "requiredFiles": [
     "AGENTS.md",
     "README.md",
+    ".nvmrc",
+    ".node-version",
     "app.config.ts",
     ".agents/rules/00-language-and-format.md",
     ".agents/rules/10-ui-b24ui-only.md",
@@ -43,6 +45,8 @@
     "docs/reference/b24ui-starter-guide.md",
     "docs/reference/bitrix24_dev_resources.md",
     "docs/reference/official-stack-map.md",
+    "scripts/create-capability.mjs",
+    "scripts/db-migrate.mjs",
     "scripts/starter-contract.json",
     "scripts/validate-starter-contract.mjs",
     "tests/unit/platform-status.test.ts",
@@ -78,6 +82,8 @@
     "shared/server-core/portal-profile.js"
   ],
   "forbiddenFileGlobs": [
+    "**/__pycache__/**",
+    "**/*.pyc",
     "docs/reference/*-credentials*",
     "docs/reference/*-secret*"
   ],
@@ -96,10 +102,17 @@
       "docs/reference/b24ui-starter-guide.md",
       "shared/server-core/platform/*",
       "b24ui",
+      "Node.js",
+      "npm run db:migrate",
+      "npm run capability:create",
       "npm run verify"
     ],
     "package.json": [
       "\"verify\"",
+      "\"db:migrate\"",
+      "\"capability:create\"",
+      "\"engines\"",
+      "\"packageManager\"",
       "@bitrix24/b24ui-nuxt"
     ],
     ".env.example": [
@@ -127,6 +140,9 @@
       "shared/server-core/platform/*",
       "shared/app-contract/*",
       "b24ui",
+      "Node.js",
+      "npm run db:migrate",
+      "npm run capability:create",
       "теста или acceptance-case"
     ],
     "docs/architecture/module-map.md": [
@@ -138,6 +154,7 @@
     ],
     "docs/architecture/extension-points.md": [
       "shared/server-core/<capability>/*",
+      "npm run capability:create",
       "module-map.md",
       "capability-map.md",
       "api-contracts.md",
@@ -267,6 +284,5 @@
     "app/features",
     "app/components"
   ],
-  "canonicalRulesDir": ".agents/rules",
-  "mirrorRuleDirs": []
+  "canonicalRulesDir": ".agents/rules"
 }

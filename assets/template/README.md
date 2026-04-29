@@ -2,6 +2,13 @@
 
 Bitrix24 local server app starter на `Nuxt + B24UI + B24 JS SDK + Vercel + Neon`.
 
+## Runtime contract
+
+- Node.js: `>=22.12.0 <25`
+- npm: `>=10`
+- package manager: npm only
+- version hints: `.nvmrc`, `.node-version`, `package.json#engines`, `packageManager`
+
 ## Что входит в starter
 
 - `GET|POST /api/b24/handler`
@@ -79,8 +86,11 @@ npm run dev
 2. Создайте отдельную Neon DB в `Vercel -> Storage`.
 3. Подключите DB к этому же проекту.
 4. Сделайте redeploy.
-5. Проверьте `/status` и `/api/platform/status`.
-6. Если `health.database.ok = false`, тогда уже проверьте auto-injected env и добавьте `DATABASE_URL` вручную.
+5. Запустите `npm run db:migrate` локально с production `DATABASE_URL` или через безопасный deployment job.
+6. Проверьте `/status` и `/api/platform/status`.
+7. Если `health.database.ok = false`, тогда уже проверьте auto-injected env и добавьте `DATABASE_URL` вручную.
+
+Runtime `ensureDbSchema` оставлен как idempotent safety net первого запуска, но production setup должен идти через `npm run db:migrate`.
 
 ## Установка в Bitrix24
 
@@ -109,6 +119,7 @@ Scope:
 - Inline `style=`, raw UI primitives и визуальные `<style scoped>` не использовать.
 - Новый функционал: сначала тест или acceptance-case, затем реализация.
 - Любой сдвиг API, module map, extension points, placement preset и smoke contour идет вместе с docs sync.
+- Новый bounded module можно создать командой `npm run capability:create -- <capability-name>`, затем обязательно обновить architecture docs и tests под реальную capability.
 
 ## Где искать source of truth
 

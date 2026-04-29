@@ -1,0 +1,11 @@
+{
+  "none": {
+    "placements": [],
+    "description": "Platform-only starter without automatic placement bind"
+  },
+  "crm-deal-lead-tabs": {
+    "placements": ["CRM_DEAL_DETAIL_TAB", "CRM_LEAD_DETAIL_TAB"],
+    "description": "Idempotent placement bind for CRM deal and lead tabs"
+  }
+}
+

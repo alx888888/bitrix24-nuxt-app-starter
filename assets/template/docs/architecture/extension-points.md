@@ -2,12 +2,13 @@
 
 ## Общий паттерн расширения
 
-1. Добавьте новый bounded module в `shared/server-core/<capability>/*`.
-2. Добавьте thin adapter в `server/api/*`, если capability требует endpoint.
-3. Добавьте shared DTO в `shared/app-contract/*`, если contract виден и серверу, и UI.
-4. Добавьте UI wiring в `app/features/*` и route shell в `app/pages/*`, если capability требует экран.
-5. Добавьте tests.
-6. Обновите `project-requirements.md`, `module-map.md`, `capability-map.md`, `api-contracts.md` и `smoke.md`.
+1. Создайте skeleton: `npm run capability:create -- <capability-name>`.
+2. Добавьте или уточните bounded module в `shared/server-core/<capability>/*`.
+3. Добавьте thin adapter в `server/api/*`, если capability требует endpoint.
+4. Добавьте shared DTO в `shared/app-contract/*`, если contract виден и серверу, и UI.
+5. Добавьте UI wiring в `app/features/*` и route shell в `app/pages/*`, если capability требует экран.
+6. Добавьте tests.
+7. Обновите `project-requirements.md`, `module-map.md`, `capability-map.md`, `api-contracts.md` и `smoke.md`.
 
 ## Минимальный skeleton capability
 
@@ -19,6 +20,14 @@
 - `docs/architecture/*` — docs sync в том же change set.
 
 Скриптовая генерация skeleton допустима только без доменной бизнес-логики.
+
+Команда skeleton:
+
+```bash
+npm run capability:create -- <capability-name>
+```
+
+Скрипт создает минимальный contract/core/route/test/readme набор и отказывается перезаписывать существующие файлы без `--force`.
 
 ## Что сюда обычно попадает
 
